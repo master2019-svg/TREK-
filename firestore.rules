@@ -1,0 +1,105 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Document ID: {userId}
+    // Fields:
+    //   - uid: string (required)
+    //   - email: string (required)
+    //   - displayName: string
+    //   - photoURL: string
+    //   - preferences: map { categories: list, tags: list }
+    //   - saved_places: list
+    //   - createdAt: timestamp
+    //
+    // Collection: user_travel_preferences
+    // Document ID: {userId}
+    // Fields:
+    //   - user_id: string (required)
+    //   - destinations: list
+    //   - travel_dates: string
+    //   - accessibility_needs: list
+    //   - budget: string (low, medium, high, luxury)
+    //   - group_type: string
+    //   - updatedAt: timestamp
+    //
+    // Collection: interactions
+    // Document ID: auto-generated
+    // Fields:
+    //   - user_id: string (required)
+    //   - place_id: string (required)
+    //   - interaction_type: string (like, save, share, view, dislike)
+    //   - timestamp: timestamp
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function hasOnlyAllowedFields(data, allowedFields) {
+      return data.keys().hasOnly(allowedFields);
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidUser(data) {
+      return hasOnlyAllowedFields(data, ['uid', 'email', 'displayName', 'photoURL', 'preferences', 'saved_places', 'createdAt']) &&
+             data.uid == request.auth.uid &&
+             isValidEmail(data.email);
+    }
+
+    function isValidTravelPreference(data) {
+      return hasOnlyAllowedFields(data, ['user_id', 'destinations', 'travel_dates', 'accessibility_needs', 'budget', 'group_type', 'updatedAt']) &&
+             data.user_id == request.auth.uid &&
+             (data.budget in ['low', 'medium', 'high', 'luxury']);
+    }
+
+    function isValidInteraction(data) {
+      return hasOnlyAllowedFields(data, ['user_id', 'place_id', 'interaction_type', 'timestamp']) &&
+             data.user_id == request.auth.uid &&
+             (data.interaction_type in ['like', 'save', 'share', 'view', 'dislike']);
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUser(request.resource.data);
+      allow update: if isOwner(userId) && isValidUser(request.resource.data);
+    }
+
+    match /user_travel_preferences/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidTravelPreference(request.resource.data);
+      allow update: if isOwner(userId) && isValidTravelPreference(request.resource.data);
+    }
+
+    match /interactions/{interactionId} {
+      allow read: if isAuthenticated() && resource.data.user_id == request.auth.uid;
+      allow create: if isAuthenticated() && isValidInteraction(request.resource.data);
+      allow update: if isAuthenticated() && isOwner(resource.data.user_id) && isValidInteraction(request.resource.data);
+      allow delete: if isAuthenticated() && isOwner(resource.data.user_id);
+    }
+  }
+}

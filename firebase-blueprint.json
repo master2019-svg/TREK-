@@ -1,0 +1,66 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile and general preferences",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Firebase Auth UID" },
+        "email": { "type": "string", "format": "email" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string", "format": "uri" },
+        "preferences": {
+          "type": "object",
+          "properties": {
+            "categories": { "type": "array", "items": { "type": "string" } },
+            "tags": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "saved_places": { "type": "array", "items": { "type": "string" } },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email"]
+    },
+    "TravelPreference": {
+      "title": "Travel Preference",
+      "description": "Specific travel needs for a user",
+      "type": "object",
+      "properties": {
+        "user_id": { "type": "string" },
+        "destinations": { "type": "array", "items": { "type": "string" } },
+        "travel_dates": { "type": "string" },
+        "accessibility_needs": { "type": "array", "items": { "type": "string" } },
+        "budget": { "type": "string", "enum": ["low", "medium", "high", "luxury"] },
+        "group_type": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["user_id"]
+    },
+    "Interaction": {
+      "title": "Interaction",
+      "description": "User interactions with places",
+      "type": "object",
+      "properties": {
+        "user_id": { "type": "string" },
+        "place_id": { "type": "string" },
+        "interaction_type": { "type": "string", "enum": ["like", "save", "share", "view", "dislike"] },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["user_id", "place_id", "interaction_type"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile documents"
+    },
+    "/user_travel_preferences/{userId}": {
+      "schema": "TravelPreference",
+      "description": "User travel preferences"
+    },
+    "/interactions/{interactionId}": {
+      "schema": "Interaction",
+      "description": "User interaction logs"
+    }
+  }
+}
