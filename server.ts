@@ -153,6 +153,7 @@ async function startServer() {
       const interactions = await database.collection("interactions").find({ user_id: req.params.user_id }).toArray();
       res.json({ data: interactions });
     } catch (error) {
+      console.error("Failed to fetch interactions:", error);
       res.status(500).json({ error: "Failed to fetch interactions" });
     }
   });
@@ -173,6 +174,7 @@ async function startServer() {
       );
       res.json({ success: true });
     } catch (error) {
+      console.error("Failed to sync user:", error);
       res.status(500).json({ error: "Failed to sync user" });
     }
   });
