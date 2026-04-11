@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { Place } from '../types';
 import { Heart, Bookmark, MapPin, Star, Accessibility } from 'lucide-react';
 import { motion } from 'motion/react';
-import { auth } from '../firebase';
+import { auth, db } from '../firebase';
+import { doc, setDoc, deleteDoc } from 'firebase/firestore';
 
 interface PlaceCardProps {
   place: Place;
@@ -24,15 +25,18 @@ export default function PlaceCard({ place, isLiked: initialLiked = false, isSave
       if (type === 'like') setIsLiked(!isLiked);
       if (type === 'save') setIsSaved(!isSaved);
 
-      await fetch('/api/interactions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const interactionId = `${auth.currentUser.uid}_${place.place_id}_${type}`;
+      
+      if (action.startsWith('un')) {
+        await deleteDoc(doc(db, "interactions", interactionId));
+      } else {
+        await setDoc(doc(db, "interactions", interactionId), {
           user_id: auth.currentUser.uid,
           place_id: place.place_id,
-          interaction_type: action
-        })
-      });
+          interaction_type: type,
+          timestamp: new Date().toISOString()
+        });
+      }
     } catch (error) {
       console.error('Failed to toggle interaction:', error);
       // Revert on error

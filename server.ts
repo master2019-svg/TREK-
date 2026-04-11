@@ -3,7 +3,7 @@ import { createServer as createViteServer } from 'vite';
 import path from 'path';
 import fs from 'fs';
 import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, getDocs, doc, getDoc, setDoc, updateDoc, query, where, deleteDoc, arrayUnion } from 'firebase/firestore';
+import { getFirestore, collection, getDocs, doc, getDoc, setDoc, updateDoc, query, where, deleteDoc, arrayUnion, documentId } from 'firebase/firestore';
 
 const app = express();
 const PORT = parseInt(process.env.PORT || '3000', 10);
@@ -88,6 +88,33 @@ async function startServer() {
     } catch (error) {
       console.error("Failed to fetch interactions:", error);
       res.status(500).json({ error: "Failed to fetch interactions" });
+    }
+  });
+
+  // Get Liked Places
+  app.get('/api/users/:user_id/liked-places', async (req, res) => {
+    try {
+      const q = query(collection(db, "interactions"), where("user_id", "==", req.params.user_id), where("interaction_type", "==", "like"));
+      const querySnapshot = await getDocs(q);
+      const likedPlaceIds = querySnapshot.docs.map(doc => doc.data().place_id);
+      
+      if (likedPlaceIds.length === 0) {
+        return res.json({ data: [] });
+      }
+
+      // Fetch places in chunks of 10 (Firestore 'in' query limit)
+      const places = [];
+      for (let i = 0; i < likedPlaceIds.length; i += 10) {
+        const chunk = likedPlaceIds.slice(i, i + 10);
+        const placesQuery = query(collection(db, "places"), where(documentId(), "in", chunk));
+        const placesSnap = await getDocs(placesQuery);
+        places.push(...placesSnap.docs.map(doc => ({ place_id: doc.id, ...doc.data() })));
+      }
+
+      res.json({ data: places });
+    } catch (error) {
+      console.error("Failed to fetch liked places:", error);
+      res.status(500).json({ error: "Failed to fetch liked places" });
     }
   });
 

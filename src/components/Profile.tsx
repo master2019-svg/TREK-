@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { auth } from '../firebase';
+import { auth, db } from '../firebase';
+import { doc, getDoc, setDoc, collection, query, where, getDocs, documentId, updateDoc } from 'firebase/firestore';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { TravelPreference } from '../types';
-import { Save, Loader2, CheckCircle2, Globe, DollarSign, Users, Accessibility, Tag, LayoutGrid, User as UserIcon } from 'lucide-react';
+import { TravelPreference, Place } from '../types';
+import { Save, Loader2, CheckCircle2, Globe, DollarSign, Users, Accessibility, Tag, LayoutGrid, User as UserIcon, Heart } from 'lucide-react';
 import { motion } from 'motion/react';
 import LoginButton from './LoginButton';
+import PlaceCard from './PlaceCard';
+import PlaceDetailsModal from './PlaceDetailsModal';
 
 const ALL_CATEGORIES = ['Historical', 'Nature', 'Beach', 'Food', 'City', 'Adventure', 'Wine Tour', 'Cultural'];
 const ALL_TAGS = ['Castles', 'Hiking', 'Architecture', 'Luxury', 'Wildlife', 'Scenic', 'Nightlife', 'Restaurants', 'Wine', 'Museums', 'Beaches', 'Kayaking', 'Cycling', 'Skiing', 'Photography', 'Hot Air Balloon', 'Shopping', 'Bars', 'Concerts', 'Spa'];
@@ -21,6 +24,8 @@ export default function Profile() {
     categories: [],
     tags: []
   });
+  const [likedPlaces, setLikedPlaces] = useState<Place[]>([]);
+  const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -32,20 +37,34 @@ export default function Profile() {
         return;
       }
       try {
-        const prefResponse = await fetch(`/api/preferences/${user.uid}`);
-        const prefResult = await prefResponse.json();
-        if (prefResult.data && Object.keys(prefResult.data).length > 0) {
+        const prefSnap = await getDoc(doc(db, "user_travel_preferences", user.uid));
+        if (prefSnap.exists()) {
+          const data = prefSnap.data();
           setPrefs({
-            ...prefResult.data,
-            categories: prefResult.data.categories || [],
-            tags: prefResult.data.tags || []
+            ...data,
+            categories: data.categories || [],
+            tags: data.tags || []
           });
         }
 
-        const userResponse = await fetch(`/api/users/${user.uid}`);
-        const userResult = await userResponse.json();
-        if (userResult.data && userResult.data.nickname) {
-          setNickname(userResult.data.nickname);
+        const userSnap = await getDoc(doc(db, "users", user.uid));
+        if (userSnap.exists() && userSnap.data().nickname) {
+          setNickname(userSnap.data().nickname);
+        }
+
+        const q = query(collection(db, "interactions"), where("user_id", "==", user.uid), where("interaction_type", "==", "like"));
+        const querySnapshot = await getDocs(q);
+        const likedPlaceIds = querySnapshot.docs.map(doc => doc.data().place_id);
+        
+        if (likedPlaceIds.length > 0) {
+          const places = [];
+          for (let i = 0; i < likedPlaceIds.length; i += 10) {
+            const chunk = likedPlaceIds.slice(i, i + 10);
+            const placesQuery = query(collection(db, "places"), where(documentId(), "in", chunk));
+            const placesSnap = await getDocs(placesQuery);
+            places.push(...placesSnap.docs.map(doc => ({ place_id: doc.id, ...doc.data() } as Place)));
+          }
+          setLikedPlaces(places);
         }
       } catch (error) {
         console.error('Failed to fetch data:', error);
@@ -60,17 +79,14 @@ export default function Profile() {
     if (!user) return;
     setSaving(true);
     try {
-      await fetch('/api/users/nickname', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ uid: user.uid, nickname })
-      });
+      await updateDoc(doc(db, "users", user.uid), { nickname });
 
-      await fetch('/api/preferences', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...prefs, user_id: user.uid })
-      });
+      await setDoc(doc(db, "user_travel_preferences", user.uid), {
+        ...prefs,
+        user_id: user.uid,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+      
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (error) {
@@ -327,7 +343,42 @@ export default function Profile() {
             ))}
           </div>
         </motion.div>
+
+        {/* Liked Places Section */}
+        <motion.div variants={itemVariants} className="glass p-8 rounded-[2rem] space-y-6 md:col-span-3 border-t-4 border-t-rose-500">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-12 h-12 rounded-2xl bg-rose-500/10 flex items-center justify-center">
+              <Heart className="w-6 h-6 text-rose-500" />
+            </div>
+            <div>
+              <h3 className="text-2xl font-display font-bold dark:text-white">Your Liked Places</h3>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">Places you've loved and saved for later.</p>
+            </div>
+          </div>
+          
+          {likedPlaces.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+              {likedPlaces.map((place) => (
+                <div key={place.place_id} onClick={() => setSelectedPlace(place)} className="cursor-pointer h-full">
+                  <PlaceCard place={place} isLiked={true} />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12 bg-white/30 dark:bg-zinc-900/30 rounded-2xl border border-dashed border-zinc-300 dark:border-zinc-700">
+              <Heart className="w-12 h-12 text-zinc-300 dark:text-zinc-600 mx-auto mb-4" />
+              <p className="text-zinc-500 dark:text-zinc-400 font-medium">You haven't liked any places yet.</p>
+              <p className="text-sm text-zinc-400 dark:text-zinc-500 mt-1">Explore and heart your favorite destinations!</p>
+            </div>
+          )}
+        </motion.div>
       </motion.div>
+
+      <PlaceDetailsModal 
+        place={selectedPlace} 
+        isOpen={!!selectedPlace} 
+        onClose={() => setSelectedPlace(null)} 
+      />
     </div>
   );
 }

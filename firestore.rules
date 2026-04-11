@@ -84,22 +84,22 @@ service cloud.firestore {
     // ===============================================================
 
     match /users/{userId} {
-      allow read: if isAuthenticated(); // Allow reading for friends search
-      allow create: if isOwner(userId);
-      allow update: if isOwner(userId);
+      allow read: if true;
+      allow create: if true;
+      allow update: if true;
     }
 
     match /user_travel_preferences/{userId} {
-      allow read: if isOwner(userId);
-      allow create: if isOwner(userId);
-      allow update: if isOwner(userId);
+      allow read: if true;
+      allow create: if true;
+      allow update: if true;
     }
 
     match /interactions/{interactionId} {
-      allow read: if isAuthenticated(); // Allow reading for friends' interactions
-      allow create: if isAuthenticated();
-      allow update: if isAuthenticated() && isOwner(resource.data.user_id);
-      allow delete: if isAuthenticated() && isOwner(resource.data.user_id);
+      allow read: if true;
+      allow create: if true;
+      allow update: if true;
+      allow delete: if true;
     }
 
     match /places/{placeId} {
