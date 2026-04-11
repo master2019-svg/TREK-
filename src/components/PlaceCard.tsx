@@ -61,7 +61,7 @@ export default function PlaceCard({ place, isLiked: initialLiked = false, isSave
       animate={{ opacity: 1, y: 0 }}
       className="glass-card rounded-[2rem] overflow-hidden card-hover group h-full flex flex-col relative"
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-cyan-400/5 via-teal-500/5 to-sky-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-br from-trek-green/5 via-teal-500/5 to-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
       
       <div className="relative h-64 overflow-hidden">
         <img
@@ -76,7 +76,7 @@ export default function PlaceCard({ place, isLiked: initialLiked = false, isSave
           <motion.button
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.8 }}
-            onClick={() => toggleInteraction('like')}
+            onClick={(e) => { e.stopPropagation(); toggleInteraction('like'); }}
             className={`p-3 rounded-2xl backdrop-blur-md transition-all duration-300 ${
               isLiked ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/30' : 'bg-white/20 text-white hover:bg-white/40'
             }`}
@@ -86,9 +86,9 @@ export default function PlaceCard({ place, isLiked: initialLiked = false, isSave
           <motion.button
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.8 }}
-            onClick={() => toggleInteraction('save')}
+            onClick={(e) => { e.stopPropagation(); toggleInteraction('save'); }}
             className={`p-3 rounded-2xl backdrop-blur-md transition-all duration-300 ${
-              isSaved ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/30' : 'bg-white/20 text-white hover:bg-white/40'
+              isSaved ? 'bg-trek-green text-white shadow-lg shadow-trek-green/30' : 'bg-white/20 text-white hover:bg-white/40'
             }`}
           >
             <Bookmark className={`w-5 h-5 ${isSaved ? 'fill-current' : ''}`} />
@@ -108,13 +108,13 @@ export default function PlaceCard({ place, isLiked: initialLiked = false, isSave
 
       <div className="p-6 flex-1 flex flex-col relative z-10">
         <div className="flex items-start justify-between mb-2">
-          <h3 className="text-xl font-display font-bold text-zinc-900 dark:text-white leading-tight group-hover:text-cyan-500 dark:group-hover:text-cyan-400 transition-colors">
+          <h3 className="text-xl font-display font-bold text-zinc-900 dark:text-white leading-tight group-hover:text-trek-green dark:group-hover:text-trek-green transition-colors">
             {place.name}
           </h3>
         </div>
         
         <div className="flex items-center gap-1.5 text-zinc-500 dark:text-zinc-400 text-sm mb-4 font-medium">
-          <MapPin className="w-4 h-4 text-cyan-500" />
+          <MapPin className="w-4 h-4 text-trek-green" />
           <span>{place.location.city}, {place.location.country}</span>
         </div>
 

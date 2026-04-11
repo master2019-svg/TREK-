@@ -96,19 +96,19 @@ export default function Friends() {
 
       <form onSubmit={handleSearch} className="relative group">
         <div className="absolute inset-y-0 left-6 flex items-center pointer-events-none">
-          <Search className="w-6 h-6 text-zinc-400 dark:text-zinc-500 group-focus-within:text-teal-500 transition-colors" />
+          <Search className="w-6 h-6 text-zinc-400 dark:text-zinc-500 group-focus-within:text-trek-green transition-colors" />
         </div>
         <input
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search by nickname, name or email..."
-          className="w-full h-16 pl-16 pr-32 glass rounded-2xl text-lg focus:outline-none focus:ring-2 focus:ring-teal-500/50 transition-all shadow-sm dark:text-white"
+          className="w-full h-16 pl-16 pr-32 glass rounded-2xl text-lg focus:outline-none focus:ring-2 focus:ring-trek-green/50 transition-all shadow-sm dark:text-white"
         />
         <button
           type="submit"
           disabled={loading}
-          className="absolute right-3 top-3 bottom-3 px-6 bg-teal-600 text-white rounded-xl font-bold hover:bg-teal-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+          className="absolute right-3 top-3 bottom-3 px-6 bg-trek-green text-white rounded-xl font-bold hover:bg-trek-dark transition-colors disabled:opacity-50 flex items-center gap-2"
         >
           {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Search'}
         </button>
@@ -117,7 +117,7 @@ export default function Friends() {
       {results.length > 0 && (
         <div className="space-y-4">
           <h3 className="text-xl font-bold dark:text-white flex items-center gap-2">
-            <Users className="w-5 h-5 text-teal-500" />
+            <Users className="w-5 h-5 text-trek-green" />
             Results
           </h3>
           <div className="grid gap-4">
@@ -126,7 +126,7 @@ export default function Friends() {
               return (
                 <div key={u.uid} className="glass p-4 rounded-2xl flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-teal-100 dark:bg-teal-900/30 rounded-full flex items-center justify-center text-teal-600 dark:text-teal-400 font-bold text-xl overflow-hidden">
+                    <div className="w-12 h-12 bg-trek-green/10 dark:bg-trek-green/20 rounded-full flex items-center justify-center text-trek-green dark:text-trek-green font-bold text-xl overflow-hidden">
                       {u.photoURL ? (
                         <img src={u.photoURL} alt={u.displayName} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                       ) : (
@@ -156,7 +156,7 @@ export default function Friends() {
                     className={`px-4 py-2 rounded-xl font-bold text-sm flex items-center gap-2 transition-colors ${
                       isFollowing
                         ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 cursor-default'
-                        : 'bg-teal-50 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 hover:bg-teal-100 dark:hover:bg-teal-900/50'
+                        : 'bg-trek-green/10 dark:bg-trek-green/20 text-trek-green dark:text-trek-green hover:bg-trek-green/20 dark:hover:bg-trek-green/30'
                     }`}
                   >
                     {isFollowing ? (

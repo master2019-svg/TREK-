@@ -64,7 +64,7 @@ export default function Discover() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
-        <Loader2 className="w-10 h-10 text-cyan-500 animate-spin" />
+        <Loader2 className="w-10 h-10 text-trek-green animate-spin" />
         <p className="text-zinc-500 dark:text-zinc-400 font-medium">Curating your personalized travel guide...</p>
       </div>
     );
@@ -73,7 +73,7 @@ export default function Discover() {
   if (!user) {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] text-center max-w-md mx-auto">
-        <div className="w-20 h-20 bg-gradient-primary rounded-3xl flex items-center justify-center mb-6 shadow-xl shadow-cyan-500/20">
+        <div className="w-20 h-20 bg-gradient-primary rounded-3xl flex items-center justify-center mb-6 shadow-xl shadow-trek-green/20">
           <Sparkles className="text-white w-10 h-10" />
         </div>
         <h2 className="text-3xl font-display font-bold mb-3 dark:text-white">Sign in to <span className="text-gradient">Discover</span></h2>

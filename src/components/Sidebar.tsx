@@ -75,7 +75,7 @@ export default function Sidebar({ activeTab, setActiveTab, isDarkMode, setIsDark
       <div className="hidden md:flex w-72 h-screen glass border-r border-zinc-200 dark:border-zinc-800 flex-col p-6 fixed left-0 top-0 z-50 transition-colors duration-500">
         <div className="flex items-center justify-between mb-12 px-2">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-primary rounded-xl flex items-center justify-center shadow-lg shadow-cyan-500/20">
+            <div className="w-10 h-10 bg-gradient-primary rounded-xl flex items-center justify-center shadow-lg shadow-trek-green/20">
               <Plane className="text-white w-6 h-6 -rotate-45" />
             </div>
             <h1 className="text-2xl font-display font-black tracking-tight text-gradient">TREK</h1>
@@ -111,7 +111,7 @@ export default function Sidebar({ activeTab, setActiveTab, isDarkMode, setIsDark
               {activeTab === item.id && (
                 <motion.div
                   layoutId="active-nav-desktop"
-                  className="absolute inset-0 bg-gradient-primary rounded-2xl shadow-lg shadow-cyan-500/20 z-[-1]"
+                  className="absolute inset-0 bg-gradient-primary rounded-2xl shadow-lg shadow-trek-green/20 z-[-1]"
                   transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                 />
               )}
@@ -173,20 +173,20 @@ export default function Sidebar({ activeTab, setActiveTab, isDarkMode, setIsDark
               className={cn(
                 "flex flex-col items-center gap-1 p-2 rounded-xl transition-all duration-200 relative z-10",
                 activeTab === item.id
-                  ? "text-cyan-500"
+                  ? "text-trek-green"
                   : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-white"
               )}
             >
               {activeTab === item.id && (
                 <motion.div
                   layoutId="active-nav-mobile"
-                  className="absolute inset-0 bg-cyan-500/10 dark:bg-cyan-500/20 rounded-xl z-[-1]"
+                  className="absolute inset-0 bg-trek-green/10 dark:bg-trek-green/20 rounded-xl z-[-1]"
                   transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                 />
               )}
               <item.icon className={cn(
                 "w-6 h-6 transition-colors",
-                activeTab === item.id ? "text-cyan-500 drop-shadow-md" : ""
+                activeTab === item.id ? "text-trek-green drop-shadow-md" : ""
               )} />
               <span className="text-[10px] font-bold">{item.label}</span>
             </button>

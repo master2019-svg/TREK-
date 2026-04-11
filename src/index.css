@@ -4,21 +4,24 @@
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Outfit", sans-serif;
+  --color-trek-green: #2A8B74;
+  --color-trek-dark: #1E6B58;
+  --color-trek-cream: #F4F1E1;
 }
 
 @layer base {
   :root {
-    --bg-color: #ffffff;
+    --bg-color: #F8F9FA;
     --text-color: #18181b;
-    --glass-bg: rgba(255, 255, 255, 0.6);
-    --glass-border: rgba(255, 255, 255, 0.4);
+    --glass-bg: rgba(255, 255, 255, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.5);
   }
 
   .dark {
     --bg-color: #09090b;
     --text-color: #fafafa;
-    --glass-bg: rgba(24, 24, 27, 0.6);
-    --glass-border: rgba(255, 255, 255, 0.05);
+    --glass-bg: rgba(24, 24, 27, 0.65);
+    --glass-border: rgba(255, 255, 255, 0.08);
   }
 
   body {
@@ -30,33 +33,46 @@
 
 .glass {
   background-color: var(--glass-bg);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--glass-border);
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
 }
 
 .glass-card {
   background-color: var(--glass-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   border: 1px solid var(--glass-border);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
 }
 
 .card-hover {
-  @apply transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 hover:border-teal-500/30 dark:hover:border-teal-400/30;
+  @apply transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 hover:border-trek-green/40 dark:hover:border-trek-green/40;
 }
 
 @layer utilities {
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 via-teal-500 to-emerald-600;
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-trek-green via-teal-500 to-emerald-500;
   }
 
   .bg-gradient-primary {
-    @apply bg-gradient-to-br from-emerald-400 via-teal-500 to-emerald-600;
+    @apply bg-gradient-to-br from-trek-green via-teal-500 to-emerald-600;
   }
   
+  .bg-grid-pattern {
+    background-image: 
+      linear-gradient(to right, rgba(42, 139, 116, 0.07) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(42, 139, 116, 0.07) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+  
+  .dark .bg-grid-pattern {
+    background-image: 
+      linear-gradient(to right, rgba(42, 139, 116, 0.15) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(42, 139, 116, 0.15) 1px, transparent 1px);
+  }
+
   .pb-safe {
     padding-bottom: env(safe-area-inset-bottom);
   }

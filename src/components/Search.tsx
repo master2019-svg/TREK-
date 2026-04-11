@@ -61,19 +61,19 @@ export default function Search() {
         
         <form onSubmit={handleSearch} className="relative group">
           <div className="absolute inset-y-0 left-6 flex items-center pointer-events-none">
-            <SearchIcon className="w-6 h-6 text-zinc-400 dark:text-zinc-500 group-focus-within:text-cyan-500 transition-colors" />
+            <SearchIcon className="w-6 h-6 text-zinc-400 dark:text-zinc-500 group-focus-within:text-trek-green transition-colors" />
           </div>
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="e.g. 'quiet beaches in France' or 'adventure sports in Japan'"
-            className="w-full h-20 pl-16 pr-32 glass rounded-[2.5rem] text-xl focus:outline-none focus:ring-4 focus:ring-cyan-500/20 transition-all shadow-xl shadow-zinc-100 dark:shadow-none dark:text-white"
+            className="w-full h-20 pl-16 pr-32 glass rounded-[2.5rem] text-xl focus:outline-none focus:ring-4 focus:ring-trek-green/20 transition-all shadow-xl shadow-zinc-100 dark:shadow-none dark:text-white"
           />
           <button
             type="submit"
             disabled={loading}
-            className="absolute right-4 top-4 bottom-4 px-8 bg-gradient-primary text-white rounded-[1.5rem] font-bold hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center gap-2 shadow-lg shadow-cyan-500/25"
+            className="absolute right-4 top-4 bottom-4 px-8 bg-gradient-primary text-white rounded-[1.5rem] font-bold hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center gap-2 shadow-lg shadow-trek-green/25"
           >
             {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Search'}
           </button>
@@ -85,7 +85,7 @@ export default function Search() {
             className={`flex items-center gap-2 px-6 py-3 rounded-full font-medium transition-all ${showFilters ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900' : 'glass text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'}`}
           >
             <SlidersHorizontal className="w-4 h-4" />
-            Filters {(category !== 'All' || budget !== 'All') && <span className="w-2 h-2 rounded-full bg-cyan-500" />}
+            Filters {(category !== 'All' || budget !== 'All') && <span className="w-2 h-2 rounded-full bg-trek-green" />}
           </button>
           
           <div className="glass flex items-center p-1 rounded-full">
@@ -122,7 +122,7 @@ export default function Search() {
                       <button
                         key={c}
                         onClick={() => { setCategory(c); handleSearch(); }}
-                        className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${category === c ? 'bg-cyan-500 text-white shadow-md shadow-cyan-500/20' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700'}`}
+                        className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${category === c ? 'bg-trek-green text-white shadow-md shadow-trek-green/20' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700'}`}
                       >
                         {c}
                       </button>
