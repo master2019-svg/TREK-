@@ -2,7 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { auth } from '../firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { TravelPreference } from '../types';
-import { Save, Loader2, CheckCircle2, Globe, DollarSign, Users, Accessibility } from 'lucide-react';
+import { Save, Loader2, CheckCircle2, Globe, DollarSign, Users, Accessibility, Tag, LayoutGrid } from 'lucide-react';
+
+const ALL_CATEGORIES = ['Historical', 'Nature', 'Beach', 'Food', 'City', 'Adventure', 'Wine Tour', 'Cultural'];
+const ALL_TAGS = ['Castles', 'Hiking', 'Architecture', 'Luxury', 'Wildlife', 'Scenic', 'Nightlife', 'Restaurants', 'Wine', 'Museums', 'Beaches', 'Kayaking', 'Cycling', 'Skiing', 'Photography', 'Hot Air Balloon', 'Shopping', 'Bars', 'Concerts', 'Spa'];
 
 export default function Profile() {
   const [user] = useAuthState(auth);
@@ -11,7 +14,9 @@ export default function Profile() {
     travel_dates: '',
     accessibility_needs: [],
     budget: 'medium',
-    group_type: 'solo'
+    group_type: 'solo',
+    categories: [],
+    tags: []
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -27,7 +32,11 @@ export default function Profile() {
         const response = await fetch(`/api/preferences/${user.uid}`);
         const result = await response.json();
         if (result.data && Object.keys(result.data).length > 0) {
-          setPrefs(result.data);
+          setPrefs({
+            ...result.data,
+            categories: result.data.categories || [],
+            tags: result.data.tags || []
+          });
         }
       } catch (error) {
         console.error('Failed to fetch preferences:', error);
@@ -56,10 +65,28 @@ export default function Profile() {
     }
   };
 
+  const toggleCategory = (category: string) => {
+    const current = prefs.categories || [];
+    if (current.includes(category)) {
+      setPrefs({ ...prefs, categories: current.filter(c => c !== category) });
+    } else {
+      setPrefs({ ...prefs, categories: [...current, category] });
+    }
+  };
+
+  const toggleTag = (tag: string) => {
+    const current = prefs.tags || [];
+    if (current.includes(tag)) {
+      setPrefs({ ...prefs, tags: current.filter(t => t !== tag) });
+    } else {
+      setPrefs({ ...prefs, tags: [...current, tag] });
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
-        <Loader2 className="w-10 h-10 text-zinc-900 dark:text-white animate-spin" />
+        <Loader2 className="w-10 h-10 text-teal-600 dark:text-teal-400 animate-spin" />
         <p className="text-zinc-500 dark:text-zinc-400 font-medium">Loading your profile...</p>
       </div>
     );
@@ -77,7 +104,7 @@ export default function Profile() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-12">
+    <div className="max-w-4xl mx-auto space-y-12 pb-20">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-4xl font-display font-bold text-zinc-900 dark:text-white mb-2">Travel Profile</h2>
@@ -86,18 +113,72 @@ export default function Profile() {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="px-8 py-4 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-2xl font-bold flex items-center gap-3 hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-all shadow-lg shadow-zinc-200 dark:shadow-none disabled:opacity-50"
+          className="px-8 py-4 bg-teal-600 text-white rounded-full font-bold flex items-center gap-3 hover:bg-teal-700 transition-all shadow-lg shadow-teal-500/30 disabled:opacity-50"
         >
           {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : saved ? <CheckCircle2 className="w-5 h-5" /> : <Save className="w-5 h-5" />}
-          {saved ? 'Preferences Saved' : 'Save Preferences'}
+          {saved ? 'Saved' : 'Finish'}
         </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* Categories */}
+        <div className="glass p-8 rounded-[2rem] space-y-6 md:col-span-2">
+          <div className="flex items-center gap-3 mb-4">
+            <LayoutGrid className="w-6 h-6 text-teal-600 dark:text-teal-400" />
+            <h3 className="text-2xl font-display font-bold dark:text-white">Select Categories</h3>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            {ALL_CATEGORIES.map((category) => {
+              const isSelected = prefs.categories?.includes(category);
+              return (
+                <button
+                  key={category}
+                  onClick={() => toggleCategory(category)}
+                  className={`px-5 py-3 rounded-full font-bold text-sm transition-all duration-300 flex items-center gap-2 ${
+                    isSelected 
+                      ? 'bg-teal-600 text-white shadow-md shadow-teal-600/30 scale-105' 
+                      : 'bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700 shadow-sm'
+                  }`}
+                >
+                  {isSelected && <CheckCircle2 className="w-4 h-4" />}
+                  {category}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Tags */}
+        <div className="glass p-8 rounded-[2rem] space-y-6 md:col-span-2">
+          <div className="flex items-center gap-3 mb-4">
+            <Tag className="w-6 h-6 text-teal-600 dark:text-teal-400" />
+            <h3 className="text-2xl font-display font-bold dark:text-white">Select Tags</h3>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            {ALL_TAGS.map((tag) => {
+              const isSelected = prefs.tags?.includes(tag);
+              return (
+                <button
+                  key={tag}
+                  onClick={() => toggleTag(tag)}
+                  className={`px-5 py-3 rounded-full font-bold text-sm transition-all duration-300 flex items-center gap-2 ${
+                    isSelected 
+                      ? 'bg-teal-600 text-white shadow-md shadow-teal-600/30 scale-105' 
+                      : 'bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700 shadow-sm'
+                  }`}
+                >
+                  {isSelected && <CheckCircle2 className="w-4 h-4" />}
+                  {tag}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Destinations */}
         <div className="glass p-8 rounded-[2rem] space-y-6">
           <div className="flex items-center gap-3 mb-2">
-            <Globe className="w-6 h-6 text-zinc-900 dark:text-white" />
+            <Globe className="w-6 h-6 text-teal-600 dark:text-teal-400" />
             <h3 className="text-xl font-display font-bold dark:text-white">Dream Destinations</h3>
           </div>
           <input
@@ -105,7 +186,7 @@ export default function Profile() {
             placeholder="e.g. France, Japan, Bali"
             value={prefs.destinations?.join(', ')}
             onChange={(e) => setPrefs({ ...prefs, destinations: e.target.value.split(',').map(s => s.trim()) })}
-            className="w-full p-4 bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800 rounded-2xl focus:outline-none focus:ring-2 focus:ring-zinc-200 dark:focus:ring-zinc-700 transition-all dark:text-white"
+            className="w-full p-4 bg-white dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800 rounded-2xl focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all dark:text-white shadow-sm"
           />
           <p className="text-xs text-zinc-400 dark:text-zinc-500 italic">Separate multiple destinations with commas.</p>
         </div>
@@ -113,7 +194,7 @@ export default function Profile() {
         {/* Budget */}
         <div className="glass p-8 rounded-[2rem] space-y-6">
           <div className="flex items-center gap-3 mb-2">
-            <DollarSign className="w-6 h-6 text-zinc-900 dark:text-white" />
+            <DollarSign className="w-6 h-6 text-teal-600 dark:text-teal-400" />
             <h3 className="text-xl font-display font-bold dark:text-white">Budget Level</h3>
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -121,8 +202,8 @@ export default function Profile() {
               <button
                 key={level}
                 onClick={() => setPrefs({ ...prefs, budget: level as any })}
-                className={`py-3 rounded-xl font-medium capitalize transition-all ${
-                  prefs.budget === level ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-md' : 'bg-zinc-50 dark:bg-zinc-900/50 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                className={`py-3 rounded-xl font-bold capitalize transition-all ${
+                  prefs.budget === level ? 'bg-teal-600 text-white shadow-md shadow-teal-600/30' : 'bg-white dark:bg-zinc-900/50 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 shadow-sm'
                 }`}
               >
                 {level}
@@ -134,13 +215,13 @@ export default function Profile() {
         {/* Group Type */}
         <div className="glass p-8 rounded-[2rem] space-y-6">
           <div className="flex items-center gap-3 mb-2">
-            <Users className="w-6 h-6 text-zinc-900 dark:text-white" />
+            <Users className="w-6 h-6 text-teal-600 dark:text-teal-400" />
             <h3 className="text-xl font-display font-bold dark:text-white">Travel Group</h3>
           </div>
           <select
             value={prefs.group_type}
             onChange={(e) => setPrefs({ ...prefs, group_type: e.target.value })}
-            className="w-full p-4 bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800 rounded-2xl focus:outline-none focus:ring-2 focus:ring-zinc-200 dark:focus:ring-zinc-700 transition-all appearance-none dark:text-white"
+            className="w-full p-4 bg-white dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800 rounded-2xl focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all appearance-none dark:text-white shadow-sm font-bold"
           >
             <option value="solo">Solo Traveler</option>
             <option value="couple">Couple</option>
@@ -152,7 +233,7 @@ export default function Profile() {
         {/* Accessibility */}
         <div className="glass p-8 rounded-[2rem] space-y-6">
           <div className="flex items-center gap-3 mb-2">
-            <Accessibility className="w-6 h-6 text-zinc-900 dark:text-white" />
+            <Accessibility className="w-6 h-6 text-teal-600 dark:text-teal-400" />
             <h3 className="text-xl font-display font-bold dark:text-white">Accessibility</h3>
           </div>
           <div className="space-y-3">
@@ -169,9 +250,9 @@ export default function Profile() {
                       setPrefs({ ...prefs, accessibility_needs: current.filter(n => n !== need) });
                     }
                   }}
-                  className="w-5 h-5 rounded-lg border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white focus:ring-zinc-900 dark:focus:ring-white dark:bg-zinc-900"
+                  className="w-5 h-5 rounded-lg border-zinc-300 dark:border-zinc-700 text-teal-600 focus:ring-teal-500 dark:bg-zinc-900"
                 />
-                <span className="text-zinc-600 dark:text-zinc-400 group-hover:text-zinc-900 dark:group-hover:text-white transition-colors">{need}</span>
+                <span className="text-zinc-600 dark:text-zinc-400 group-hover:text-zinc-900 dark:group-hover:text-white transition-colors font-medium">{need}</span>
               </label>
             ))}
           </div>

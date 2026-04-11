@@ -9,6 +9,7 @@ import Discover from './components/Discover';
 import Search from './components/Search';
 import Roadmap from './components/Roadmap';
 import Profile from './components/Profile';
+import Friends from './components/Friends';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { motion, AnimatePresence } from 'motion/react';
 import { Plane } from 'lucide-react';
@@ -39,6 +40,8 @@ export default function App() {
         return <Search />;
       case 'roadmap':
         return <Roadmap />;
+      case 'friends':
+        return <Friends />;
       case 'profile':
         return <Profile />;
       default:
@@ -75,9 +78,9 @@ export default function App() {
         
         {/* Animated Background Blobs - Maldives Theme */}
         <div className="fixed inset-0 z-[-1] overflow-hidden pointer-events-none transition-colors duration-500">
-          <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-cyan-400/20 dark:bg-cyan-600/10 blur-[100px] animate-blob" />
+          <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-emerald-400/20 dark:bg-emerald-600/10 blur-[100px] animate-blob" />
           <div className="absolute top-[20%] right-[-10%] w-[40vw] h-[40vw] rounded-full bg-teal-500/20 dark:bg-teal-600/10 blur-[100px] animate-blob animation-delay-2000" />
-          <div className="absolute bottom-[-20%] left-[20%] w-[60vw] h-[60vw] rounded-full bg-sky-500/20 dark:bg-sky-600/10 blur-[100px] animate-blob animation-delay-4000" />
+          <div className="absolute bottom-[-20%] left-[20%] w-[60vw] h-[60vw] rounded-full bg-emerald-500/20 dark:bg-emerald-600/10 blur-[100px] animate-blob animation-delay-4000" />
         </div>
 
         <Sidebar 

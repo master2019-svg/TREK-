@@ -40,6 +40,31 @@ async function getDb(retries = 3) {
           translation_cache: db.collection("translation_cache"),
           reviews: db.collection("reviews")
         };
+
+        // Create TTL indexes
+        try {
+          await collections.translation_cache.createIndex({ "timestamp": 1 }, { expireAfterSeconds: 604800 });
+          await collections.user_keywords_cache.createIndex({ "timestamp": 1 }, { expireAfterSeconds: 86400 });
+          await collections.keyword_similarity_cache.createIndex({ "timestamp": 1 }, { expireAfterSeconds: 86400 });
+          await collections.similar_users_cache.createIndex({ "timestamp": 1 }, { expireAfterSeconds: 43200 });
+          await collections.roadmaps.createIndex({ "created_at": 1 }, { expireAfterSeconds: 86400 });
+          await collections.recommendations_cache.createIndex({ "timestamp": 1 }, { expireAfterSeconds: 21600 });
+          
+          try {
+            await collections.shown_places.dropIndex('last_updated_1');
+          } catch (e) {}
+          await collections.shown_places.createIndex({ "last_updated": 1 }, { expireAfterSeconds: 21600 });
+          
+          await collections.cache_locks.createIndex({ "timestamp": 1 }, { expireAfterSeconds: 600 });
+
+          // Create user_id indexes
+          for (const coll of [collections.recommendations_cache, collections.shown_places, collections.roadmaps, collections.cache_locks]) {
+            await coll.createIndex({ "user_id": 1 });
+          }
+          console.log("✅ Created MongoDB indexes");
+        } catch (error) {
+          console.error("❌ Error creating indexes:", error);
+        }
         
         return db;
       } catch (error) {
@@ -132,7 +157,65 @@ async function startServer() {
     }
   });
 
-  // Recommendations API with Algorithm
+  // Sync User
+  app.post('/api/users/sync', async (req, res) => {
+    try {
+      const database = await getDb();
+      const { uid, email, displayName, photoURL } = req.body;
+      
+      await database.collection("users").updateOne(
+        { uid },
+        { 
+          $set: { email, displayName, photoURL, lastLogin: new Date() },
+          $setOnInsert: { following: [], createdAt: new Date() }
+        },
+        { upsert: true }
+      );
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to sync user" });
+    }
+  });
+
+  // Follow User
+  app.post('/api/friends/follow', async (req, res) => {
+    try {
+      const database = await getDb();
+      const { user_id, friend_id } = req.body;
+      
+      await database.collection("users").updateOne(
+        { uid: user_id },
+        { $addToSet: { following: friend_id } },
+        { upsert: true }
+      );
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to follow user" });
+    }
+  });
+
+  // Search Users (Friends)
+  app.get('/api/users/search', async (req, res) => {
+    try {
+      const database = await getDb();
+      const { query } = req.query;
+      
+      if (!query) return res.json({ data: [] });
+
+      const users = await database.collection("users").find({
+        $or: [
+          { displayName: { $regex: query, $options: 'i' } },
+          { email: { $regex: query, $options: 'i' } }
+        ]
+      }).limit(10).toArray();
+
+      res.json({ data: users.map((u: any) => ({ uid: u.uid, displayName: u.displayName, photoURL: u.photoURL })) });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to search users" });
+    }
+  });
+
+  // Recommendations API with Advanced Algorithm (Instagram-like feed + Friends Blend)
   app.get('/api/recommendations/:user_id', async (req, res) => {
     try {
       const database = await getDb();
@@ -143,16 +226,32 @@ async function startServer() {
       const userDestinations = prefs.destinations || [];
       const userBudget = prefs.budget || 'medium';
       const userAccessibility = prefs.accessibility_needs || [];
+      const userCategories = prefs.categories || [];
+      const userTags = prefs.tags || [];
       
       // 2. Fetch user interactions
       const interactions = await database.collection("interactions").find({ user_id }).toArray();
       const likedPlaceIds = interactions.filter((i: any) => i.interaction_type === 'like').map((i: any) => i.place_id);
       const savedPlaceIds = interactions.filter((i: any) => i.interaction_type === 'save').map((i: any) => i.place_id);
 
-      // 3. Fetch all places
+      // 3. Fetch friends (following)
+      const userDoc = await database.collection("users").findOne({ uid: user_id });
+      const following = userDoc?.following || [];
+      
+      // Fetch friends' interactions to blend in
+      let friendsLikedPlaceIds: string[] = [];
+      if (following.length > 0) {
+        const friendsInteractions = await database.collection("interactions").find({ 
+          user_id: { $in: following },
+          interaction_type: 'like'
+        }).toArray();
+        friendsLikedPlaceIds = friendsInteractions.map((i: any) => i.place_id);
+      }
+
+      // 4. Fetch all places
       const places = await database.collection("places").find({}).toArray();
       
-      // 4. Score places
+      // 5. Score places (Advanced Algorithm)
       const scoredPlaces = places.map((place: any) => {
         let score = 0;
         
@@ -160,6 +259,17 @@ async function startServer() {
         const rating = place.average_rating ? parseFloat(place.average_rating.toString()) : 0;
         score += (rating / 5) * 0.15;
         
+        // Category Match
+        if (userCategories.includes(place.category)) {
+          score += 0.3;
+        }
+
+        // Tags Match
+        if (userTags.length > 0 && place.tags) {
+          const matchCount = userTags.filter((tag: string) => place.tags.includes(tag)).length;
+          score += (matchCount / userTags.length) * 0.2;
+        }
+
         // Destination match (Boost)
         if (userDestinations.length > 0) {
           const inDest = userDestinations.some((d: string) => 
@@ -174,28 +284,36 @@ async function startServer() {
         const pBudget = budgetMap[place.budget?.toLowerCase()] || 2;
         const uBudget = budgetMap[userBudget] || 2;
         const budgetDiff = Math.abs(pBudget - uBudget);
-        score += (1 - (budgetDiff / 3)) * 0.2;
+        score += (1 - (budgetDiff / 3)) * 0.15;
 
         // Accessibility match
         if (userAccessibility.length > 0) {
           const matchCount = userAccessibility.filter((need: string) => 
             place.accessibility?.includes(need)
           ).length;
-          score += (matchCount / userAccessibility.length) * 0.25;
+          score += (matchCount / userAccessibility.length) * 0.2;
         }
 
-        // Interaction history (don't recommend places already saved/liked as "new discoveries", but maybe boost similar ones)
-        // For simplicity, we just penalize already interacted places slightly to show new ones
+        // Blend Mode: Boost places liked by friends (Social Proof)
+        if (friendsLikedPlaceIds.includes(place._id.toString())) {
+          score += 0.35; // Significant boost for friends' recommendations
+          place.recommendedByFriend = true;
+        }
+
+        // Interaction history (penalize already interacted places slightly to show new ones)
         if (likedPlaceIds.includes(place._id.toString()) || savedPlaceIds.includes(place._id.toString())) {
           score -= 0.5; 
         }
 
+        // Add some randomness for discovery (Instagram-like exploration)
+        score += Math.random() * 0.1;
+
         return { ...place, score };
       });
 
-      // 5. Sort and return top 10
+      // 6. Sort and return top 20 for an infinite-scroll like feed
       scoredPlaces.sort((a: any, b: any) => b.score - a.score);
-      const topPlaces = scoredPlaces.slice(0, 10);
+      const topPlaces = scoredPlaces.slice(0, 20);
 
       const formattedData = topPlaces.map((p: any) => ({
         place: {

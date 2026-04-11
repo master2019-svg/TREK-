@@ -1,7 +1,7 @@
 import React from 'react';
 import { auth, googleProvider, signInWithPopup, signOut } from '../firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { Compass, Search, Map, User as UserIcon, LogIn, LogOut, Plane, Loader2, Moon, Sun } from 'lucide-react';
+import { Compass, Search, Map, User as UserIcon, LogIn, LogOut, Plane, Loader2, Moon, Sun, Users } from 'lucide-react';
 import { motion } from 'motion/react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -24,6 +24,7 @@ export default function Sidebar({ activeTab, setActiveTab, isDarkMode, setIsDark
     { id: 'discover', label: 'Discover', icon: Compass },
     { id: 'search', label: 'Search', icon: Search },
     { id: 'roadmap', label: 'My Roadmap', icon: Map },
+    { id: 'friends', label: 'Friends', icon: Users },
     { id: 'profile', label: 'Travel Profile', icon: UserIcon },
   ];
 
@@ -33,7 +34,20 @@ export default function Sidebar({ activeTab, setActiveTab, isDarkMode, setIsDark
     if (isLoggingIn) return;
     setIsLoggingIn(true);
     try {
-      await signInWithPopup(auth, googleProvider);
+      const result = await signInWithPopup(auth, googleProvider);
+      if (result.user) {
+        // Save user to MongoDB
+        await fetch('/api/users/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            uid: result.user.uid,
+            email: result.user.email,
+            displayName: result.user.displayName,
+            photoURL: result.user.photoURL
+          })
+        });
+      }
     } catch (error: any) {
       if (error.code === 'auth/cancelled-popup-request') {
         console.warn('Login popup request was cancelled by a newer request.');

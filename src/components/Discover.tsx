@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Place } from '../types';
 import PlaceCard from './PlaceCard';
 import PlacesMap from './PlacesMap';
+import PlaceDetailsModal from './PlaceDetailsModal';
 import { auth } from '../firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { motion } from 'motion/react';
@@ -12,6 +13,7 @@ export default function Discover() {
   const [places, setPlaces] = useState<Place[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
+  const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
   const [userInteractions, setUserInteractions] = useState<{liked: Set<string>, saved: Set<string>}>({
     liked: new Set(),
     saved: new Set()
@@ -131,11 +133,13 @@ export default function Discover() {
                 show: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", bounce: 0.4 } }
               }}
             >
-              <PlaceCard
-                place={place}
-                isLiked={userInteractions.liked.has(place.place_id)}
-                isSaved={userInteractions.saved.has(place.place_id)}
-              />
+              <div onClick={() => setSelectedPlace(place)} className="cursor-pointer h-full">
+                <PlaceCard
+                  place={place}
+                  isLiked={userInteractions.liked.has(place.place_id)}
+                  isSaved={userInteractions.saved.has(place.place_id)}
+                />
+              </div>
             </motion.div>
           ))}
         </motion.div>
@@ -144,6 +148,12 @@ export default function Discover() {
           <PlacesMap places={places} />
         </div>
       )}
+
+      <PlaceDetailsModal 
+        place={selectedPlace} 
+        isOpen={!!selectedPlace} 
+        onClose={() => setSelectedPlace(null)} 
+      />
     </div>
   );
 }
