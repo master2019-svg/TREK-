@@ -2,13 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { auth } from '../firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { TravelPreference } from '../types';
-import { Save, Loader2, CheckCircle2, Globe, DollarSign, Users, Accessibility, Tag, LayoutGrid } from 'lucide-react';
+import { Save, Loader2, CheckCircle2, Globe, DollarSign, Users, Accessibility, Tag, LayoutGrid, User as UserIcon } from 'lucide-react';
 
 const ALL_CATEGORIES = ['Historical', 'Nature', 'Beach', 'Food', 'City', 'Adventure', 'Wine Tour', 'Cultural'];
 const ALL_TAGS = ['Castles', 'Hiking', 'Architecture', 'Luxury', 'Wildlife', 'Scenic', 'Nightlife', 'Restaurants', 'Wine', 'Museums', 'Beaches', 'Kayaking', 'Cycling', 'Skiing', 'Photography', 'Hot Air Balloon', 'Shopping', 'Bars', 'Concerts', 'Spa'];
 
 export default function Profile() {
   const [user] = useAuthState(auth);
+  const [nickname, setNickname] = useState('');
   const [prefs, setPrefs] = useState<Partial<TravelPreference>>({
     destinations: [],
     travel_dates: '',
@@ -23,34 +24,50 @@ export default function Profile() {
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    const fetchPrefs = async () => {
+    const fetchData = async () => {
       if (!user) {
         setLoading(false);
         return;
       }
       try {
-        const response = await fetch(`/api/preferences/${user.uid}`);
-        const result = await response.json();
-        if (result.data && Object.keys(result.data).length > 0) {
+        // Fetch preferences
+        const prefResponse = await fetch(`/api/preferences/${user.uid}`);
+        const prefResult = await prefResponse.json();
+        if (prefResult.data && Object.keys(prefResult.data).length > 0) {
           setPrefs({
-            ...result.data,
-            categories: result.data.categories || [],
-            tags: result.data.tags || []
+            ...prefResult.data,
+            categories: prefResult.data.categories || [],
+            tags: prefResult.data.tags || []
           });
         }
+
+        // Fetch user profile (for nickname)
+        const userResponse = await fetch(`/api/users/${user.uid}`);
+        const userResult = await userResponse.json();
+        if (userResult.data && userResult.data.nickname) {
+          setNickname(userResult.data.nickname);
+        }
       } catch (error) {
-        console.error('Failed to fetch preferences:', error);
+        console.error('Failed to fetch data:', error);
       } finally {
         setLoading(false);
       }
     };
-    fetchPrefs();
+    fetchData();
   }, [user]);
 
   const handleSave = async () => {
     if (!user) return;
     setSaving(true);
     try {
+      // Save nickname
+      await fetch('/api/users/nickname', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ uid: user.uid, nickname })
+      });
+
+      // Save preferences
       await fetch('/api/preferences', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -121,6 +138,22 @@ export default function Profile() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* Nickname */}
+        <div className="glass p-8 rounded-[2rem] space-y-6 md:col-span-2">
+          <div className="flex items-center gap-3 mb-2">
+            <UserIcon className="w-6 h-6 text-teal-600 dark:text-teal-400" />
+            <h3 className="text-2xl font-display font-bold dark:text-white">Your Nickname</h3>
+          </div>
+          <input
+            type="text"
+            placeholder="Choose a unique nickname..."
+            value={nickname}
+            onChange={(e) => setNickname(e.target.value)}
+            className="w-full p-4 bg-white dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800 rounded-2xl focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all dark:text-white shadow-sm"
+          />
+          <p className="text-xs text-zinc-400 dark:text-zinc-500 italic">This is how you will appear to other travelers when they search for friends.</p>
+        </div>
+
         {/* Categories */}
         <div className="glass p-8 rounded-[2rem] space-y-6 md:col-span-2">
           <div className="flex items-center gap-3 mb-4">

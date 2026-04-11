@@ -183,14 +183,66 @@ async function startServer() {
       const database = await getDb();
       const { user_id, friend_id } = req.body;
       
+      // Add friend_id to user's following list
       await database.collection("users").updateOne(
         { uid: user_id },
         { $addToSet: { following: friend_id } },
         { upsert: true }
       );
+      
+      // Add user_id to friend's followers list
+      await database.collection("users").updateOne(
+        { uid: friend_id },
+        { $addToSet: { followers: user_id } },
+        { upsert: true }
+      );
+      
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: "Failed to follow user" });
+    }
+  });
+
+  // Get User Stats
+  app.get('/api/users/:uid/stats', async (req, res) => {
+    try {
+      const database = await getDb();
+      const { uid } = req.params;
+      
+      const user = await database.collection("users").findOne({ uid });
+      const followingCount = user?.following?.length || 0;
+      const followersCount = user?.followers?.length || 0;
+      
+      res.json({ data: { following: followingCount, followers: followersCount } });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch user stats" });
+    }
+  });
+
+  // Get User Profile
+  app.get('/api/users/:uid', async (req, res) => {
+    try {
+      const database = await getDb();
+      const { uid } = req.params;
+      const user = await database.collection("users").findOne({ uid });
+      res.json({ data: user });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch user" });
+    }
+  });
+
+  // Update Nickname
+  app.post('/api/users/nickname', async (req, res) => {
+    try {
+      const database = await getDb();
+      const { uid, nickname } = req.body;
+      await database.collection("users").updateOne(
+        { uid },
+        { $set: { nickname } }
+      );
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update nickname" });
     }
   });
 
@@ -204,12 +256,18 @@ async function startServer() {
 
       const users = await database.collection("users").find({
         $or: [
+          { nickname: { $regex: query, $options: 'i' } },
           { displayName: { $regex: query, $options: 'i' } },
           { email: { $regex: query, $options: 'i' } }
         ]
       }).limit(10).toArray();
 
-      res.json({ data: users.map((u: any) => ({ uid: u.uid, displayName: u.displayName, photoURL: u.photoURL })) });
+      res.json({ data: users.map((u: any) => ({ 
+        uid: u.uid, 
+        displayName: u.displayName, 
+        nickname: u.nickname,
+        photoURL: u.photoURL 
+      })) });
     } catch (error) {
       res.status(500).json({ error: "Failed to search users" });
     }
