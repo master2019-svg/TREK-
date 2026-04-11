@@ -7,6 +7,7 @@ import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { Loader2, Calendar, Navigation, Map as MapIcon, ChevronRight } from 'lucide-react';
 import { motion } from 'motion/react';
+import LoginButton from './LoginButton';
 
 // Fix for default marker icons in Leaflet
 // @ts-ignore
@@ -62,13 +63,14 @@ export default function Roadmap() {
   if (!user || !roadmap || roadmap.data.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] text-center max-w-md mx-auto">
-        <div className="w-20 h-20 bg-zinc-100 dark:bg-zinc-800 rounded-3xl flex items-center justify-center mb-6">
-          <MapIcon className="text-zinc-400 dark:text-zinc-500 w-10 h-10" />
+        <div className="w-24 h-24 bg-gradient-primary rounded-3xl flex items-center justify-center mb-8 shadow-xl shadow-trek-green/20">
+          <MapIcon className="w-12 h-12 text-white" />
         </div>
-        <h2 className="text-2xl font-display font-bold mb-3 dark:text-white">Your Roadmap Awaits</h2>
-        <p className="text-zinc-500 dark:text-zinc-400 leading-relaxed">
-          Set your travel preferences in the Profile tab to generate a custom roadmap with optimized routes and destinations.
+        <h2 className="text-4xl font-display font-black mb-4 dark:text-white">Your Roadmap Awaits</h2>
+        <p className="text-zinc-500 dark:text-zinc-400 text-lg leading-relaxed mb-8">
+          Sign in and set your travel preferences in the Profile tab to generate a custom roadmap with optimized routes and destinations.
         </p>
+        {!user && <LoginButton />}
       </div>
     );
   }

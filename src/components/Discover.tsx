@@ -6,7 +6,8 @@ import PlaceDetailsModal from './PlaceDetailsModal';
 import { auth } from '../firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { motion } from 'motion/react';
-import { Loader2, Sparkles, Map as MapIcon, List } from 'lucide-react';
+import { Loader2, Sparkles, Map as MapIcon, List, Compass } from 'lucide-react';
+import LoginButton from './LoginButton';
 
 export default function Discover() {
   const [user] = useAuthState(auth);
@@ -73,13 +74,16 @@ export default function Discover() {
   if (!user) {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] text-center max-w-md mx-auto">
-        <div className="w-20 h-20 bg-gradient-primary rounded-3xl flex items-center justify-center mb-6 shadow-xl shadow-trek-green/20">
-          <Sparkles className="text-white w-10 h-10" />
+        <div className="w-24 h-24 bg-gradient-primary rounded-3xl flex items-center justify-center mb-8 shadow-xl shadow-trek-green/20">
+          <Compass className="w-12 h-12 text-white" />
         </div>
-        <h2 className="text-3xl font-display font-bold mb-3 dark:text-white">Sign in to <span className="text-gradient">Discover</span></h2>
-        <p className="text-zinc-500 dark:text-zinc-400 leading-relaxed">
+        <h2 className="text-4xl font-display font-black mb-4 dark:text-white">
+          Sign in to <span className="text-trek-green">Discover</span>
+        </h2>
+        <p className="text-zinc-500 dark:text-zinc-400 text-lg leading-relaxed mb-8">
           Log in to unlock personalized travel recommendations based on your preferences and travel style.
         </p>
+        <LoginButton />
       </div>
     );
   }

@@ -1,105 +1,42 @@
 import express from 'express';
 import { createServer as createViteServer } from 'vite';
-import { MongoClient, ObjectId } from 'mongodb';
 import path from 'path';
-import { getDistance } from 'geolib';
+import fs from 'fs';
+import { initializeApp } from 'firebase/app';
+import { getFirestore, collection, getDocs, doc, getDoc, setDoc, updateDoc, query, where, deleteDoc, arrayUnion } from 'firebase/firestore';
 
 const app = express();
 const PORT = parseInt(process.env.PORT || '3000', 10);
 
-// MongoDB Connection
-const password = process.env.MONGO_PASSWORD || "cmCqBjtQCQDWbvlo";
-const encodedPassword = encodeURIComponent(password);
-const defaultUri = `mongodb+srv://shehabwww153:${encodedPassword}@userauth.rvtb5.mongodb.net/travel_app?retryWrites=true&w=majority&appName=userAuth`;
-const MONGO_URI = process.env.MONGO_URI || defaultUri;
-const client = new MongoClient(MONGO_URI);
+// Initialize Firebase Client SDK for Node.js
 let db: any;
-
-async function getDb(retries = 3) {
-  if (!db) {
-    for (let i = 0; i < retries; i++) {
-      try {
-        await client.connect();
-        db = client.db("travel_app");
-        console.log("✅ Connected to MongoDB");
-        
-        // Define collections (for reference, matching Python backend)
-        const collections = {
-          users: db.collection("users"),
-          places: db.collection("places"),
-          interactions: db.collection("interactions"),
-          search_queries: db.collection("search_queries"),
-          travel_preferences: db.collection("user_travel_preferences"),
-          recommendations_cache: db.collection("recommendations_cache"),
-          shown_places: db.collection("shown_places"),
-          roadmaps: db.collection("roadmaps"),
-          cache_locks: db.collection("cache_locks"),
-          user_keywords_cache: db.collection("user_keywords_cache"),
-          keyword_similarity_cache: db.collection("keyword_similarity_cache"),
-          similar_users_cache: db.collection("similar_users_cache"),
-          translation_cache: db.collection("translation_cache"),
-          reviews: db.collection("reviews")
-        };
-
-        // Create TTL indexes
-        try {
-          await collections.translation_cache.createIndex({ "timestamp": 1 }, { expireAfterSeconds: 604800 });
-          await collections.user_keywords_cache.createIndex({ "timestamp": 1 }, { expireAfterSeconds: 86400 });
-          await collections.keyword_similarity_cache.createIndex({ "timestamp": 1 }, { expireAfterSeconds: 86400 });
-          await collections.similar_users_cache.createIndex({ "timestamp": 1 }, { expireAfterSeconds: 43200 });
-          await collections.roadmaps.createIndex({ "created_at": 1 }, { expireAfterSeconds: 86400 });
-          await collections.recommendations_cache.createIndex({ "timestamp": 1 }, { expireAfterSeconds: 21600 });
-          
-          try {
-            await collections.shown_places.dropIndex('last_updated_1');
-          } catch (e) {}
-          await collections.shown_places.createIndex({ "last_updated": 1 }, { expireAfterSeconds: 21600 });
-          
-          await collections.cache_locks.createIndex({ "timestamp": 1 }, { expireAfterSeconds: 600 });
-
-          // Create user_id indexes
-          for (const coll of [collections.recommendations_cache, collections.shown_places, collections.roadmaps, collections.cache_locks]) {
-            await coll.createIndex({ "user_id": 1 });
-          }
-          console.log("✅ Created MongoDB indexes");
-        } catch (error) {
-          console.error("❌ Error creating indexes:", error);
-        }
-        
-        return db;
-      } catch (error) {
-        console.error(`❌ MongoDB connection attempt ${i + 1} failed:`, error);
-        if (i === retries - 1) {
-          throw new Error(`Database connection failed after ${retries} attempts`);
-        }
-        await new Promise(res => setTimeout(res, 2000)); // wait 2s before retry
-      }
-    }
+try {
+  const configPath = path.join(process.cwd(), 'firebase-applet-config.json');
+  if (fs.existsSync(configPath)) {
+    const firebaseConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+    const firebaseApp = initializeApp(firebaseConfig);
+    db = getFirestore(firebaseApp, firebaseConfig.firestoreDatabaseId);
+    console.log("✅ Connected to Firebase Firestore");
+  } else {
+    console.warn("⚠️ firebase-applet-config.json not found. Firestore will not work.");
   }
-  return db;
+} catch (error) {
+  console.error("❌ Failed to initialize Firebase:", error);
 }
 
 async function startServer() {
-  // Try initial connection, but don't block server start if it fails
-  try {
-    await getDb();
-  } catch (e) {
-    console.warn("⚠️ Initial DB connection failed, will retry on first request");
-  }
-
   app.use(express.json());
 
   // API Routes
   app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', database: db ? 'connected' : 'disconnected' });
+    res.json({ status: 'ok', database: db ? 'firebase_connected' : 'disconnected' });
   });
 
   // Get Preferences
   app.get('/api/preferences/:user_id', async (req, res) => {
     try {
-      const database = await getDb();
-      const prefs = await database.collection("user_travel_preferences").findOne({ user_id: req.params.user_id });
-      res.json({ data: prefs || {} });
+      const docSnap = await getDoc(doc(db, "user_travel_preferences", req.params.user_id));
+      res.json({ data: docSnap.exists() ? docSnap.data() : {} });
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch preferences" });
     }
@@ -108,13 +45,11 @@ async function startServer() {
   // Save Preferences
   app.post('/api/preferences', async (req, res) => {
     try {
-      const database = await getDb();
       const { user_id, ...prefs } = req.body;
-      await database.collection("user_travel_preferences").updateOne(
-        { user_id },
-        { $set: { ...prefs, updatedAt: new Date() } },
-        { upsert: true }
-      );
+      await setDoc(doc(db, "user_travel_preferences", user_id), {
+        ...prefs,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: "Failed to save preferences" });
@@ -124,21 +59,18 @@ async function startServer() {
   // Save Interaction
   app.post('/api/interactions', async (req, res) => {
     try {
-      const database = await getDb();
       const { user_id, place_id, interaction_type } = req.body;
+      const interactionId = `${user_id}_${place_id}_${interaction_type.replace('un', '')}`;
       
       if (interaction_type === 'unlike' || interaction_type === 'unsave') {
-        await database.collection("interactions").deleteOne({
+        await deleteDoc(doc(db, "interactions", interactionId));
+      } else {
+        await setDoc(doc(db, "interactions", interactionId), {
           user_id,
           place_id,
-          interaction_type: interaction_type.replace('un', '')
+          interaction_type,
+          timestamp: new Date().toISOString()
         });
-      } else {
-        await database.collection("interactions").updateOne(
-          { user_id, place_id, interaction_type },
-          { $set: { timestamp: new Date() } },
-          { upsert: true }
-        );
       }
       res.json({ success: true });
     } catch (error) {
@@ -149,8 +81,9 @@ async function startServer() {
   // Get Interactions
   app.get('/api/interactions/:user_id', async (req, res) => {
     try {
-      const database = await getDb();
-      const interactions = await database.collection("interactions").find({ user_id: req.params.user_id }).toArray();
+      const q = query(collection(db, "interactions"), where("user_id", "==", req.params.user_id));
+      const querySnapshot = await getDocs(q);
+      const interactions = querySnapshot.docs.map(doc => doc.data());
       res.json({ data: interactions });
     } catch (error) {
       console.error("Failed to fetch interactions:", error);
@@ -161,17 +94,23 @@ async function startServer() {
   // Sync User
   app.post('/api/users/sync', async (req, res) => {
     try {
-      const database = await getDb();
       const { uid, email, displayName, photoURL } = req.body;
+      const userRef = doc(db, "users", uid);
+      const userSnap = await getDoc(userRef);
       
-      await database.collection("users").updateOne(
-        { uid },
-        { 
-          $set: { email, displayName, photoURL, lastLogin: new Date() },
-          $setOnInsert: { following: [], createdAt: new Date() }
-        },
-        { upsert: true }
-      );
+      if (!userSnap.exists()) {
+        await setDoc(userRef, {
+          uid, email, displayName, photoURL,
+          following: [], followers: [],
+          createdAt: new Date().toISOString(),
+          lastLogin: new Date().toISOString()
+        });
+      } else {
+        await updateDoc(userRef, {
+          email, displayName, photoURL,
+          lastLogin: new Date().toISOString()
+        });
+      }
       res.json({ success: true });
     } catch (error) {
       console.error("Failed to sync user:", error);
@@ -182,23 +121,9 @@ async function startServer() {
   // Follow User
   app.post('/api/friends/follow', async (req, res) => {
     try {
-      const database = await getDb();
       const { user_id, friend_id } = req.body;
-      
-      // Add friend_id to user's following list
-      await database.collection("users").updateOne(
-        { uid: user_id },
-        { $addToSet: { following: friend_id } },
-        { upsert: true }
-      );
-      
-      // Add user_id to friend's followers list
-      await database.collection("users").updateOne(
-        { uid: friend_id },
-        { $addToSet: { followers: user_id } },
-        { upsert: true }
-      );
-      
+      await updateDoc(doc(db, "users", user_id), { following: arrayUnion(friend_id) });
+      await updateDoc(doc(db, "users", friend_id), { followers: arrayUnion(user_id) });
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: "Failed to follow user" });
@@ -208,14 +133,12 @@ async function startServer() {
   // Get User Stats
   app.get('/api/users/:uid/stats', async (req, res) => {
     try {
-      const database = await getDb();
-      const { uid } = req.params;
-      
-      const user = await database.collection("users").findOne({ uid });
-      const followingCount = user?.following?.length || 0;
-      const followersCount = user?.followers?.length || 0;
-      
-      res.json({ data: { following: followingCount, followers: followersCount } });
+      const userSnap = await getDoc(doc(db, "users", req.params.uid));
+      const user = userSnap.data();
+      res.json({ data: { 
+        following: user?.following?.length || 0, 
+        followers: user?.followers?.length || 0 
+      }});
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch user stats" });
     }
@@ -224,10 +147,8 @@ async function startServer() {
   // Get User Profile
   app.get('/api/users/:uid', async (req, res) => {
     try {
-      const database = await getDb();
-      const { uid } = req.params;
-      const user = await database.collection("users").findOne({ uid });
-      res.json({ data: user });
+      const userSnap = await getDoc(doc(db, "users", req.params.uid));
+      res.json({ data: userSnap.exists() ? userSnap.data() : null });
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch user" });
     }
@@ -236,12 +157,8 @@ async function startServer() {
   // Update Nickname
   app.post('/api/users/nickname', async (req, res) => {
     try {
-      const database = await getDb();
       const { uid, nickname } = req.body;
-      await database.collection("users").updateOne(
-        { uid },
-        { $set: { nickname } }
-      );
+      await updateDoc(doc(db, "users", uid), { nickname });
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: "Failed to update nickname" });
@@ -251,86 +168,75 @@ async function startServer() {
   // Search Users (Friends)
   app.get('/api/users/search', async (req, res) => {
     try {
-      const database = await getDb();
-      const { query } = req.query;
+      const { query: searchQuery } = req.query;
+      if (!searchQuery) return res.json({ data: [] });
+
+      const queryStr = (searchQuery as string).toLowerCase();
+      const usersSnap = await getDocs(collection(db, "users"));
       
-      if (!query) return res.json({ data: [] });
+      const users = usersSnap.docs
+        .map(doc => doc.data())
+        .filter(u => 
+          (u.nickname && u.nickname.toLowerCase().includes(queryStr)) ||
+          (u.displayName && u.displayName.toLowerCase().includes(queryStr)) ||
+          (u.email && u.email.toLowerCase().includes(queryStr))
+        )
+        .slice(0, 10);
 
-      const users = await database.collection("users").find({
-        $or: [
-          { nickname: { $regex: query, $options: 'i' } },
-          { displayName: { $regex: query, $options: 'i' } },
-          { email: { $regex: query, $options: 'i' } }
-        ]
-      }).limit(10).toArray();
-
-      res.json({ data: users.map((u: any) => ({ 
-        uid: u.uid, 
-        displayName: u.displayName, 
-        nickname: u.nickname,
-        photoURL: u.photoURL 
-      })) });
+      res.json({ data: users.map(u => ({ 
+        uid: u.uid, displayName: u.displayName, nickname: u.nickname, photoURL: u.photoURL 
+      }))});
     } catch (error) {
       res.status(500).json({ error: "Failed to search users" });
     }
   });
 
-  // Recommendations API with Advanced Algorithm (Instagram-like feed + Friends Blend)
+  // Recommendations API
   app.get('/api/recommendations/:user_id', async (req, res) => {
     try {
-      const database = await getDb();
       const { user_id } = req.params;
       
-      // 1. Fetch user preferences
-      const prefs = await database.collection("user_travel_preferences").findOne({ user_id }) || {};
+      const prefsSnap = await getDoc(doc(db, "user_travel_preferences", user_id));
+      const prefs = prefsSnap.exists() ? prefsSnap.data() : {};
       const userDestinations = prefs.destinations || [];
       const userBudget = prefs.budget || 'medium';
       const userAccessibility = prefs.accessibility_needs || [];
       const userCategories = prefs.categories || [];
       const userTags = prefs.tags || [];
       
-      // 2. Fetch user interactions
-      const interactions = await database.collection("interactions").find({ user_id }).toArray();
-      const likedPlaceIds = interactions.filter((i: any) => i.interaction_type === 'like').map((i: any) => i.place_id);
-      const savedPlaceIds = interactions.filter((i: any) => i.interaction_type === 'save').map((i: any) => i.place_id);
+      const interactionsSnap = await getDocs(query(collection(db, "interactions"), where("user_id", "==", user_id)));
+      const interactions = interactionsSnap.docs.map(doc => doc.data());
+      const likedPlaceIds = interactions.filter(i => i.interaction_type === 'like').map(i => i.place_id);
+      const savedPlaceIds = interactions.filter(i => i.interaction_type === 'save').map(i => i.place_id);
 
-      // 3. Fetch friends (following)
-      const userDoc = await database.collection("users").findOne({ uid: user_id });
-      const following = userDoc?.following || [];
+      const userDocSnap = await getDoc(doc(db, "users", user_id));
+      const following = userDocSnap.exists() ? (userDocSnap.data().following || []) : [];
       
-      // Fetch friends' interactions to blend in
       let friendsLikedPlaceIds: string[] = [];
       if (following.length > 0) {
-        const friendsInteractions = await database.collection("interactions").find({ 
-          user_id: { $in: following },
-          interaction_type: 'like'
-        }).toArray();
-        friendsLikedPlaceIds = friendsInteractions.map((i: any) => i.place_id);
+        // Firestore 'in' query is limited to 10, so we fetch all and filter in memory for simplicity in prototype
+        const allInteractionsSnap = await getDocs(query(collection(db, "interactions"), where("interaction_type", "==", "like")));
+        friendsLikedPlaceIds = allInteractionsSnap.docs
+          .map(doc => doc.data())
+          .filter(i => following.includes(i.user_id))
+          .map(i => i.place_id);
       }
 
-      // 4. Fetch all places
-      const places = await database.collection("places").find({}).toArray();
+      const placesSnap = await getDocs(collection(db, "places"));
+      const places = placesSnap.docs.map(doc => ({ ...doc.data(), _id: doc.id, place_id: doc.id }));
       
-      // 5. Score places (Advanced Algorithm)
       const scoredPlaces = places.map((place: any) => {
         let score = 0;
-        
-        // Rating factor (0-1) * 0.15
         const rating = place.average_rating ? parseFloat(place.average_rating.toString()) : 0;
         score += (rating / 5) * 0.15;
         
-        // Category Match
-        if (userCategories.includes(place.category)) {
-          score += 0.3;
-        }
+        if (userCategories.includes(place.category)) score += 0.3;
 
-        // Tags Match
         if (userTags.length > 0 && place.tags) {
           const matchCount = userTags.filter((tag: string) => place.tags.includes(tag)).length;
           score += (matchCount / userTags.length) * 0.2;
         }
 
-        // Destination match (Boost)
         if (userDestinations.length > 0) {
           const inDest = userDestinations.some((d: string) => 
             place.location?.city?.toLowerCase().includes(d.toLowerCase()) || 
@@ -339,14 +245,12 @@ async function startServer() {
           if (inDest) score += 0.4;
         }
 
-        // Budget match
         const budgetMap: Record<string, number> = { low: 1, medium: 2, high: 3, luxury: 4 };
         const pBudget = budgetMap[place.budget?.toLowerCase()] || 2;
         const uBudget = budgetMap[userBudget] || 2;
         const budgetDiff = Math.abs(pBudget - uBudget);
         score += (1 - (budgetDiff / 3)) * 0.15;
 
-        // Accessibility match
         if (userAccessibility.length > 0) {
           const matchCount = userAccessibility.filter((need: string) => 
             place.accessibility?.includes(need)
@@ -354,35 +258,23 @@ async function startServer() {
           score += (matchCount / userAccessibility.length) * 0.2;
         }
 
-        // Blend Mode: Boost places liked by friends (Social Proof)
-        if (friendsLikedPlaceIds.includes(place._id.toString())) {
-          score += 0.35; // Significant boost for friends' recommendations
+        if (friendsLikedPlaceIds.includes(place.place_id)) {
+          score += 0.35;
           place.recommendedByFriend = true;
         }
 
-        // Interaction history (penalize already interacted places slightly to show new ones)
-        if (likedPlaceIds.includes(place._id.toString()) || savedPlaceIds.includes(place._id.toString())) {
+        if (likedPlaceIds.includes(place.place_id) || savedPlaceIds.includes(place.place_id)) {
           score -= 0.5; 
         }
 
-        // Add some randomness for discovery (Instagram-like exploration)
         score += Math.random() * 0.1;
-
         return { ...place, score };
       });
 
-      // 6. Sort and return top 20 for an infinite-scroll like feed
       scoredPlaces.sort((a: any, b: any) => b.score - a.score);
       const topPlaces = scoredPlaces.slice(0, 20);
 
-      const formattedData = topPlaces.map((p: any) => ({
-        place: {
-          ...p,
-          place_id: p._id.toString()
-        }
-      }));
-
-      res.json({ data: formattedData });
+      res.json({ data: topPlaces.map((p: any) => ({ place: p })) });
     } catch (error) {
       console.error("Recommendations error:", error);
       res.status(500).json({ error: "Failed to fetch recommendations" });
@@ -392,45 +284,31 @@ async function startServer() {
   // Search API
   app.get('/api/search/:user_id', async (req, res) => {
     try {
-      const database = await getDb();
-      const { query, category, budget } = req.query;
+      const { query: searchQuery, category, budget } = req.query;
       
-      let dbQuery: any = {};
+      const placesSnap = await getDocs(collection(db, "places"));
+      let places = placesSnap.docs.map(doc => ({ ...doc.data(), _id: doc.id, place_id: doc.id }));
       
-      if (query) {
-        dbQuery.$or = [
-          { name: { $regex: query, $options: 'i' } },
-          { category: { $regex: query, $options: 'i' } },
-          { tags: { $in: [new RegExp(query as string, 'i')] } },
-          { "location.city": { $regex: query, $options: 'i' } },
-          { "location.country": { $regex: query, $options: 'i' } }
-        ];
+      if (searchQuery) {
+        const qStr = (searchQuery as string).toLowerCase();
+        places = places.filter((p: any) => 
+          (p.name && p.name.toLowerCase().includes(qStr)) ||
+          (p.category && p.category.toLowerCase().includes(qStr)) ||
+          (p.tags && p.tags.some((t: string) => t.toLowerCase().includes(qStr))) ||
+          (p.location?.city && p.location.city.toLowerCase().includes(qStr)) ||
+          (p.location?.country && p.location.country.toLowerCase().includes(qStr))
+        );
       }
 
       if (category && category !== 'all') {
-        dbQuery.category = { $regex: category, $options: 'i' };
+        places = places.filter((p: any) => p.category?.toLowerCase() === (category as string).toLowerCase());
       }
 
       if (budget && budget !== 'all') {
-        dbQuery.budget = { $regex: budget, $options: 'i' };
+        places = places.filter((p: any) => p.budget?.toLowerCase() === (budget as string).toLowerCase());
       }
 
-      // If no filters are applied, return empty or a default set
-      if (Object.keys(dbQuery).length === 0) {
-        const places = await database.collection("places").find({}).limit(20).toArray();
-        const formattedData = places.map((p: any) => ({
-          place: { ...p, place_id: p._id.toString() }
-        }));
-        return res.json({ data: formattedData });
-      }
-
-      const places = await database.collection("places").find(dbQuery).limit(20).toArray();
-
-      const formattedData = places.map((p: any) => ({
-        place: { ...p, place_id: p._id.toString() }
-      }));
-
-      res.json({ data: formattedData });
+      res.json({ data: places.slice(0, 20).map((p: any) => ({ place: p })) });
     } catch (error) {
       console.error("Search error:", error);
       res.status(500).json({ error: "Failed to search places" });
@@ -440,44 +318,47 @@ async function startServer() {
   // Roadmap API
   app.get('/api/roadmap/:user_id', async (req, res) => {
     try {
-      const database = await getDb();
       const { user_id } = req.params;
       
-      // Fetch user preferences
-      const prefs = await database.collection("user_travel_preferences").findOne({ user_id }) || {};
-      const userDestinations = prefs.destinations || [];
+      const prefsSnap = await getDoc(doc(db, "user_travel_preferences", user_id));
+      const userDestinations = prefsSnap.exists() ? (prefsSnap.data().destinations || []) : [];
 
-      let query: any = {};
+      const placesSnap = await getDocs(collection(db, "places"));
+      let places = placesSnap.docs.map(doc => ({ ...doc.data(), _id: doc.id, place_id: doc.id }));
+
       if (userDestinations.length > 0) {
-        query = {
-          $or: userDestinations.map((d: string) => ({
-            $or: [
-              { "location.city": { $regex: d, $options: 'i' } },
-              { "location.country": { $regex: d, $options: 'i' } }
-            ]
-          }))
-        };
+        const destMatched = places.filter((p: any) => 
+          userDestinations.some((d: string) => 
+            p.location?.city?.toLowerCase().includes(d.toLowerCase()) || 
+            p.location?.country?.toLowerCase().includes(d.toLowerCase())
+          )
+        );
+        if (destMatched.length > 0) places = destMatched;
       }
 
-      // Get places matching destination, limit to 6 for a roadmap
-      let places = await database.collection("places").find(query).limit(6).toArray();
-      
-      // Fallback if no places match
-      if (places.length === 0) {
-        places = await database.collection("places").find({}).limit(6).toArray();
-      }
-
-      // Sort places by distance to create a logical route (simplified)
-      // In a real app, use TSP (Traveling Salesperson Problem) algorithm
+      places = places.slice(0, 6);
       
       const data = places.map((p: any, idx: number) => ({
-        place: { ...p, place_id: p._id.toString() },
+        place: p,
         next_destination: idx < places.length - 1 ? places[idx + 1].name : null
       }));
 
       res.json({ data });
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch roadmap" });
+    }
+  });
+
+  // Reviews API
+  app.get('/api/reviews/:place_id', async (req, res) => {
+    try {
+      const { place_id } = req.params;
+      const reviewsSnap = await getDocs(query(collection(db, "reviews"), where("place_id", "==", place_id)));
+      const reviews = reviewsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      res.json({ data: reviews });
+    } catch (error) {
+      console.error("Reviews error:", error);
+      res.status(500).json({ error: "Failed to fetch reviews" });
     }
   });
 

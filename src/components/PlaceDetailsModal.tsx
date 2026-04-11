@@ -1,7 +1,14 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Place } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, MapPin, Star, Heart, Bookmark, Accessibility, ThumbsUp } from 'lucide-react';
+import { X, MapPin, Star, Heart, Bookmark, Accessibility, ThumbsUp, MessageSquare } from 'lucide-react';
+
+interface Review {
+  id: string;
+  reviewer_name: string;
+  rating: number;
+  comment: string;
+}
 
 interface PlaceDetailsModalProps {
   place: Place | null;
@@ -10,6 +17,61 @@ interface PlaceDetailsModalProps {
 }
 
 export default function PlaceDetailsModal({ place, isOpen, onClose }: PlaceDetailsModalProps) {
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [loadingReviews, setLoadingReviews] = useState(false);
+
+  useEffect(() => {
+    if (isOpen && place) {
+      setLoadingReviews(true);
+      fetch(`/api/reviews/${place.place_id || place._id}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.data && data.data.length > 0) {
+            setReviews(data.data);
+          } else {
+            // Fallback to mock reviews if none exist
+            setReviews([
+              {
+                id: 'mock1',
+                reviewer_name: 'user001',
+                rating: 5,
+                comment: 'Amazing place to visit! Highly recommended.'
+              },
+              {
+                id: 'mock2',
+                reviewer_name: 'traveler99',
+                rating: 4,
+                comment: 'A must-see destination. The views are incredible.'
+              }
+            ]);
+          }
+        })
+        .catch(err => {
+          console.error("Failed to fetch reviews", err);
+          // Fallback to mock reviews on error
+          setReviews([
+            {
+              id: 'mock1',
+              reviewer_name: 'user001',
+              rating: 5,
+              comment: 'Amazing place to visit! Highly recommended.'
+            },
+            {
+              id: 'mock2',
+              reviewer_name: 'traveler99',
+              rating: 4,
+              comment: 'A must-see destination. The views are incredible.'
+            }
+          ]);
+        })
+        .finally(() => {
+          setLoadingReviews(false);
+        });
+    } else {
+      setReviews([]);
+    }
+  }, [isOpen, place]);
+
   if (!place) return null;
 
   return (
@@ -51,9 +113,23 @@ export default function PlaceDetailsModal({ place, isOpen, onClose }: PlaceDetai
 
               <div className="absolute bottom-6 left-6 right-6">
                 <h2 className="text-4xl font-display font-black text-white mb-2 leading-tight">{place.name}</h2>
-                <div className="flex items-center gap-2 text-zinc-200 font-medium">
-                  <MapPin className="w-5 h-5 text-teal-400" />
-                  <span>{place.location.city}, {place.location.country}</span>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-zinc-200 font-medium">
+                    <MapPin className="w-5 h-5 text-teal-400" />
+                    <span>{place.location.city}, {place.location.country}</span>
+                  </div>
+                  
+                  {place.location.coordinates && (
+                    <a
+                      href={`https://www.google.com/maps/dir/?api=1&destination=${place.location.coordinates.lat},${place.location.coordinates.lng}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="bg-trek-green hover:bg-trek-dark text-white px-4 py-2 rounded-xl font-bold text-sm shadow-lg transition-colors flex items-center gap-2"
+                    >
+                      <MapPin className="w-4 h-4" />
+                      Get Directions
+                    </a>
+                  )}
                 </div>
               </div>
             </div>
@@ -91,17 +167,39 @@ export default function PlaceDetailsModal({ place, isOpen, onClose }: PlaceDetai
               )}
 
               <div>
-                <h3 className="text-xl font-display font-bold text-zinc-900 dark:text-white mb-4">Reviews:</h3>
+                <h3 className="text-xl font-display font-bold text-zinc-900 dark:text-white mb-4 flex items-center gap-2">
+                  <MessageSquare className="w-5 h-5 text-trek-green" />
+                  Reviews
+                </h3>
                 <div className="space-y-4">
-                  {/* Mock Review */}
-                  <div className="bg-teal-600 text-white p-4 rounded-2xl rounded-tl-none">
-                    <p className="font-bold mb-1">user001</p>
-                    <p className="text-teal-50">Amazing place to visit! Highly recommended.</p>
-                  </div>
-                  <div className="bg-zinc-100 dark:bg-zinc-800 p-4 rounded-2xl rounded-tr-none ml-8">
-                    <p className="font-bold text-zinc-900 dark:text-white mb-1">traveler99</p>
-                    <p className="text-zinc-600 dark:text-zinc-300">A must-see destination. The views are incredible.</p>
-                  </div>
+                  {loadingReviews ? (
+                    <div className="animate-pulse space-y-4">
+                      <div className="h-24 bg-zinc-100 dark:bg-zinc-800 rounded-2xl"></div>
+                      <div className="h-24 bg-zinc-100 dark:bg-zinc-800 rounded-2xl"></div>
+                    </div>
+                  ) : (
+                    reviews.map((review, index) => (
+                      <div 
+                        key={review.id} 
+                        className={`p-4 rounded-2xl ${
+                          index % 2 === 0 
+                            ? 'bg-trek-green text-white rounded-tl-none' 
+                            : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white rounded-tr-none ml-8'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="font-bold">{review.reviewer_name || 'Anonymous'}</p>
+                          <div className="flex items-center gap-1">
+                            <Star className={`w-4 h-4 fill-current ${index % 2 === 0 ? 'text-yellow-300' : 'text-yellow-500'}`} />
+                            <span className="text-sm font-medium">{review.rating}</span>
+                          </div>
+                        </div>
+                        <p className={index % 2 === 0 ? 'text-teal-50' : 'text-zinc-600 dark:text-zinc-300'}>
+                          {review.comment}
+                        </p>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
             </div>

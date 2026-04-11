@@ -7,6 +7,7 @@ import { auth } from '../firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { Search as SearchIcon, Loader2, SlidersHorizontal, Map as MapIcon, List } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import LoginButton from './LoginButton';
 
 const CATEGORIES = ['All', 'Beach', 'Mountain', 'City', 'Historic', 'Nature', 'Adventure'];
 const BUDGETS = ['All', 'Low', 'Medium', 'High', 'Luxury'];
@@ -48,6 +49,21 @@ export default function Search() {
       setLoading(false);
     }
   };
+
+  if (!user) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[60vh] text-center max-w-md mx-auto">
+        <div className="w-24 h-24 bg-gradient-primary rounded-3xl flex items-center justify-center mb-8 shadow-xl shadow-trek-green/20">
+          <SearchIcon className="w-12 h-12 text-white" />
+        </div>
+        <h2 className="text-4xl font-display font-black mb-4 dark:text-white">Search Places</h2>
+        <p className="text-zinc-500 dark:text-zinc-400 text-lg leading-relaxed mb-8">
+          Sign in to search for destinations and get personalized results.
+        </p>
+        <LoginButton />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-12">

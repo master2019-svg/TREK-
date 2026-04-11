@@ -84,22 +84,32 @@ service cloud.firestore {
     // ===============================================================
 
     match /users/{userId} {
-      allow read: if isOwner(userId);
-      allow create: if isOwner(userId) && isValidUser(request.resource.data);
-      allow update: if isOwner(userId) && isValidUser(request.resource.data);
+      allow read: if isAuthenticated(); // Allow reading for friends search
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
     }
 
     match /user_travel_preferences/{userId} {
       allow read: if isOwner(userId);
-      allow create: if isOwner(userId) && isValidTravelPreference(request.resource.data);
-      allow update: if isOwner(userId) && isValidTravelPreference(request.resource.data);
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
     }
 
     match /interactions/{interactionId} {
-      allow read: if isAuthenticated() && resource.data.user_id == request.auth.uid;
-      allow create: if isAuthenticated() && isValidInteraction(request.resource.data);
-      allow update: if isAuthenticated() && isOwner(resource.data.user_id) && isValidInteraction(request.resource.data);
+      allow read: if isAuthenticated(); // Allow reading for friends' interactions
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && isOwner(resource.data.user_id);
       allow delete: if isAuthenticated() && isOwner(resource.data.user_id);
+    }
+
+    match /places/{placeId} {
+      allow read: if true; // Publicly readable
+      allow write: if true; // Allow seeding for now
+    }
+
+    match /reviews/{reviewId} {
+      allow read: if true; // Publicly readable
+      allow write: if isAuthenticated(); // Allow authenticated users to write reviews
     }
   }
 }

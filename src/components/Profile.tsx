@@ -4,6 +4,7 @@ import { useAuthState } from 'react-firebase-hooks/auth';
 import { TravelPreference } from '../types';
 import { Save, Loader2, CheckCircle2, Globe, DollarSign, Users, Accessibility, Tag, LayoutGrid, User as UserIcon } from 'lucide-react';
 import { motion } from 'motion/react';
+import LoginButton from './LoginButton';
 
 const ALL_CATEGORIES = ['Historical', 'Nature', 'Beach', 'Food', 'City', 'Adventure', 'Wine Tour', 'Cultural'];
 const ALL_TAGS = ['Castles', 'Hiking', 'Architecture', 'Luxury', 'Wildlife', 'Scenic', 'Nightlife', 'Restaurants', 'Wine', 'Museums', 'Beaches', 'Kayaking', 'Cycling', 'Skiing', 'Photography', 'Hot Air Balloon', 'Shopping', 'Bars', 'Concerts', 'Spa'];
@@ -109,10 +110,14 @@ export default function Profile() {
   if (!user) {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] text-center max-w-md mx-auto">
-        <h2 className="text-2xl font-display font-bold mb-3 dark:text-white">Your Travel Identity</h2>
-        <p className="text-zinc-500 dark:text-zinc-400 leading-relaxed">
+        <div className="w-24 h-24 bg-gradient-primary rounded-3xl flex items-center justify-center mb-8 shadow-xl shadow-trek-green/20">
+          <UserIcon className="w-12 h-12 text-white" />
+        </div>
+        <h2 className="text-4xl font-display font-black mb-4 dark:text-white">Your Travel Identity</h2>
+        <p className="text-zinc-500 dark:text-zinc-400 text-lg leading-relaxed mb-8">
           Sign in to customize your travel preferences and get personalized recommendations.
         </p>
+        <LoginButton />
       </div>
     );
   }
