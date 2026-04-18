@@ -6,19 +6,22 @@ import PlaceDetailsModal from './PlaceDetailsModal';
 import { auth } from '../firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { motion } from 'motion/react';
-import { Loader2, Sparkles, Map as MapIcon, List, Compass } from 'lucide-react';
+import { Loader2, Sparkles, Map as MapIcon, List, Compass, RotateCw } from 'lucide-react';
 import LoginButton from './LoginButton';
 
 export default function Discover() {
   const [user] = useAuthState(auth);
   const [places, setPlaces] = useState<Place[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
   const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
-  const [userInteractions, setUserInteractions] = useState<{liked: Set<string>, saved: Set<string>}>({
+  const [seenPlaceIds, setSeenPlaceIds] = useState<Set<string>>(new Set());
+  const [userInteractions, setUserInteractions] = useState<{liked: Set<string>, saved: Set<string}>({
     liked: new Set(),
     saved: new Set()
   });
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchInteractions = async () => {
@@ -28,13 +31,16 @@ export default function Discover() {
         const result = await response.json();
         const liked = new Set<string>();
         const saved = new Set<string>();
+        const seen = new Set<string>();
         if (result.data) {
           result.data.forEach((data: any) => {
             if (data.interaction_type === 'like') liked.add(data.place_id);
             if (data.interaction_type === 'save') saved.add(data.place_id);
+            if (data.interaction_type === 'view') seen.add(data.place_id);
           });
         }
         setUserInteractions({ liked, saved });
+        setSeenPlaceIds(seen);
       } catch (error) {
         console.error('Failed to fetch interactions:', error);
       }
@@ -46,13 +52,19 @@ export default function Discover() {
         return;
       }
       try {
+        setError(null);
         const response = await fetch(`/api/recommendations/${user.uid}`);
+        if (!response.ok) throw new Error('Failed to fetch recommendations');
         const result = await response.json();
         if (result.data) {
-          setPlaces(result.data.map((item: any) => item.place));
+          const filteredPlaces = result.data
+            .map((item: any) => item.place)
+            .filter((place: Place) => !seenPlaceIds.has(place.place_id));
+          setPlaces(filteredPlaces);
         }
-      } catch (error) {
-        console.error('Failed to fetch recommendations:', error);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load recommendations');
+        console.error('Failed to fetch recommendations:', err);
       } finally {
         setLoading(false);
       }
@@ -61,6 +73,28 @@ export default function Discover() {
     fetchInteractions();
     fetchRecommendations();
   }, [user]);
+
+  const handleRefresh = async () => {
+    if (refreshing) return;
+    setRefreshing(true);
+    try {
+      setError(null);
+      const response = await fetch(`/api/recommendations/${user?.uid}?exclude_seen=true`);
+      if (!response.ok) throw new Error('Failed to refresh recommendations');
+      const result = await response.json();
+      if (result.data) {
+        const filteredPlaces = result.data
+          .map((item: any) => item.place)
+          .filter((place: Place) => !seenPlaceIds.has(place.place_id));
+        setPlaces(filteredPlaces);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to refresh recommendations');
+      console.error('Failed to refresh recommendations:', err);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -90,6 +124,12 @@ export default function Discover() {
 
   return (
     <div className="space-y-8">
+      {error && (
+        <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl text-red-700 dark:text-red-300">
+          {error}
+        </div>
+      )}
+      
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h2 className="text-4xl font-display font-bold text-zinc-900 dark:text-white mb-2">
@@ -98,55 +138,83 @@ export default function Discover() {
           <p className="text-zinc-500 dark:text-zinc-400">Handpicked destinations based on your unique travel profile.</p>
         </div>
         
-        <div className="glass flex items-center p-1 rounded-full self-start md:self-auto">
-          <button
-            onClick={() => setViewMode('list')}
-            className={`flex items-center gap-2 px-6 py-2 rounded-full font-medium transition-all ${viewMode === 'list' ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-md' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white'}`}
+        <div className="flex items-center gap-3">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="glass flex items-center gap-2 px-6 py-3 rounded-full font-medium transition-all hover:bg-trek-green hover:text-white disabled:opacity-50"
           >
-            <List className="w-4 h-4" />
-            List
-          </button>
-          <button
-            onClick={() => setViewMode('map')}
-            className={`flex items-center gap-2 px-6 py-2 rounded-full font-medium transition-all ${viewMode === 'map' ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-md' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white'}`}
-          >
-            <MapIcon className="w-4 h-4" />
-            Map
-          </button>
+            <RotateCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+            {refreshing ? 'Refreshing...' : 'Refresh'}
+          </motion.button>
+
+          <div className="glass flex items-center p-1 rounded-full self-start md:self-auto">
+            <button
+              onClick={() => setViewMode('list')}
+              className={`flex items-center gap-2 px-6 py-2 rounded-full font-medium transition-all ${viewMode === 'list' ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-md' : 'text-zinc-600 dark:text-zinc-400'}`}
+            >
+              <List className="w-4 h-4" />
+              List
+            </button>
+            <button
+              onClick={() => setViewMode('map')}
+              className={`flex items-center gap-2 px-6 py-2 rounded-full font-medium transition-all ${viewMode === 'map' ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-md' : 'text-zinc-600 dark:text-zinc-400'}`}
+            >
+              <MapIcon className="w-4 h-4" />
+              Map
+            </button>
+          </div>
         </div>
       </div>
 
       {viewMode === 'list' ? (
-        <motion.div 
-          initial="hidden"
-          animate="show"
-          variants={{
-            hidden: { opacity: 0 },
-            show: {
-              opacity: 1,
-              transition: { staggerChildren: 0.1 }
-            }
-          }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-        >
-          {places.map((place) => (
-            <motion.div
-              key={place.place_id}
-              variants={{
-                hidden: { opacity: 0, y: 30, scale: 0.95 },
-                show: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", bounce: 0.4 } }
-              }}
+        places.length > 0 ? (
+          <motion.div 
+            initial="hidden"
+            animate="show"
+            variants={{
+              hidden: { opacity: 0 },
+              show: {
+                opacity: 1,
+                transition: { staggerChildren: 0.1 }
+              }
+            }}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+          >
+            {places.map((place) => (
+              <motion.div
+                key={place.place_id}
+                variants={{
+                  hidden: { opacity: 0, y: 30, scale: 0.95 },
+                  show: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", bounce: 0.4 } }
+                }}
+              >
+                <div onClick={() => setSelectedPlace(place)} className="cursor-pointer h-full">
+                  <PlaceCard
+                    place={place}
+                    isLiked={userInteractions.liked.has(place.place_id)}
+                    isSaved={userInteractions.saved.has(place.place_id)}
+                  />
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+        ) : (
+          <div className="text-center py-12">
+            <p className="text-zinc-500 dark:text-zinc-400 mb-4">No new places to discover. Try refreshing!</p>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleRefresh}
+              className="inline-flex items-center gap-2 px-6 py-3 bg-trek-green text-white rounded-full font-medium hover:bg-trek-dark transition-colors"
             >
-              <div onClick={() => setSelectedPlace(place)} className="cursor-pointer h-full">
-                <PlaceCard
-                  place={place}
-                  isLiked={userInteractions.liked.has(place.place_id)}
-                  isSaved={userInteractions.saved.has(place.place_id)}
-                />
-              </div>
-            </motion.div>
-          ))}
-        </motion.div>
+              <RotateCw className="w-4 h-4" />
+              Discover More
+            </motion.button>
+          </div>
+        )
       ) : (
         <div className="h-[70vh] w-full">
           <PlacesMap places={places} />
