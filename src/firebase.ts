@@ -10,6 +10,13 @@ export const auth = getAuth(app);
 export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 export const googleProvider = new GoogleAuthProvider();
 
+// Configure Google provider with additional scopes
+googleProvider.addScopes('profile', 'email');
+googleProvider.setCustomParameters({
+  'login_hint': 'user@example.com',
+  'prompt': 'select_account'
+});
+
 export { signInWithPopup, signOut };
 
 // Error handling for Firestore
@@ -62,6 +69,23 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
   };
   console.error('Firestore Error: ', JSON.stringify(errInfo));
   throw new Error(JSON.stringify(errInfo));
+}
+
+// Enhanced error handling for authentication errors
+export function getAuthErrorMessage(error: any): string {
+  if (error.code === 'auth/unauthorized-domain') {
+    return 'This domain is not authorized for Google Sign-In. Please add it to Firebase Console > Authentication > Authorized domains.';
+  } else if (error.code === 'auth/cancelled-popup-request') {
+    return 'Login popup request was cancelled by a newer request.';
+  } else if (error.code === 'auth/popup-closed-by-user') {
+    return 'Login popup was closed by the user.';
+  } else if (error.code === 'auth/operation-not-allowed') {
+    return 'Google Sign-In is not enabled. Please enable it in Firebase Console.';
+  } else if (error.code === 'auth/network-request-failed') {
+    return 'Network error. Please check your connection and try again.';
+  } else {
+    return error.message || 'An error occurred during authentication.';
+  }
 }
 
 // Test connection
