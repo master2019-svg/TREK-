@@ -3,17 +3,25 @@ import { auth, db } from '../firebase';
 import { doc, getDoc, setDoc, collection, query, where, getDocs, documentId, updateDoc } from 'firebase/firestore';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { TravelPreference, Place } from '../types';
-import { Save, Loader2, CheckCircle2, Globe, DollarSign, Users, Accessibility, Tag, LayoutGrid, User as UserIcon, Heart } from 'lucide-react';
+import { Save, Loader2, CheckCircle2, Globe, DollarSign, Users, Accessibility, Tag, LayoutGrid, User as UserIcon, Heart, Star, ChevronRight } from 'lucide-react';
 import { motion } from 'motion/react';
 import LoginButton from './LoginButton';
 import PlaceCard from './PlaceCard';
 import PlaceDetailsModal from './PlaceDetailsModal';
+import PlaceImage from './PlaceImage';
 
 const ALL_CATEGORIES = ['Historical', 'Nature', 'Beach', 'Food', 'City', 'Adventure', 'Wine Tour', 'Cultural'];
 const ALL_TAGS = ['Castles', 'Hiking', 'Architecture', 'Luxury', 'Wildlife', 'Scenic', 'Nightlife', 'Restaurants', 'Wine', 'Museums', 'Beaches', 'Kayaking', 'Cycling', 'Skiing', 'Photography', 'Hot Air Balloon', 'Shopping', 'Bars', 'Concerts', 'Spa'];
 
+interface LikedPlaceData {
+  place: Place;
+  interactionId: string;
+  notes: string;
+  rating: number;
+}
+
 export default function Profile() {
-  const [user] = useAuthState(auth);
+  const [user, authLoading] = useAuthState(auth);
   const [nickname, setNickname] = useState('');
   const [prefs, setPrefs] = useState<Partial<TravelPreference>>({
     destinations: [],
@@ -24,7 +32,7 @@ export default function Profile() {
     categories: [],
     tags: []
   });
-  const [likedPlaces, setLikedPlaces] = useState<Place[]>([]);
+  const [likedPlaces, setLikedPlaces] = useState<LikedPlaceData[]>([]);
   const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -32,6 +40,7 @@ export default function Profile() {
 
   useEffect(() => {
     const fetchData = async () => {
+      if (authLoading) return;
       if (!user) {
         setLoading(false);
         return;
@@ -54,7 +63,13 @@ export default function Profile() {
 
         const q = query(collection(db, "interactions"), where("user_id", "==", user.uid), where("interaction_type", "==", "like"));
         const querySnapshot = await getDocs(q);
-        const likedPlaceIds = querySnapshot.docs.map(doc => doc.data().place_id);
+        
+        const interactionsMap = new Map();
+        querySnapshot.docs.forEach(doc => {
+          interactionsMap.set(doc.data().place_id, { id: doc.id, ...doc.data() });
+        });
+        
+        const likedPlaceIds = Array.from(interactionsMap.keys());
         
         if (likedPlaceIds.length > 0) {
           const places = [];
@@ -64,7 +79,15 @@ export default function Profile() {
             const placesSnap = await getDocs(placesQuery);
             places.push(...placesSnap.docs.map(doc => ({ place_id: doc.id, ...doc.data() } as Place)));
           }
-          setLikedPlaces(places);
+          
+          const combined = places.map(p => ({
+            place: p,
+            interactionId: interactionsMap.get(p.place_id).id,
+            notes: interactionsMap.get(p.place_id).notes || '',
+            rating: interactionsMap.get(p.place_id).rating || 0
+          }));
+          
+          setLikedPlaces(combined);
         }
       } catch (error) {
         console.error('Failed to fetch data:', error);
@@ -96,6 +119,17 @@ export default function Profile() {
     }
   };
 
+  const handleInteractionUpdate = async (interactionId: string, field: 'notes' | 'rating', value: any) => {
+    try {
+      await updateDoc(doc(db, "interactions", interactionId), { [field]: value });
+      setLikedPlaces(prev => prev.map(p => 
+        p.interactionId === interactionId ? { ...p, [field]: value } : p
+      ));
+    } catch (error) {
+      console.error(`Failed to update ${field}:`, error);
+    }
+  };
+
   const toggleCategory = (category: string) => {
     const current = prefs.categories || [];
     if (current.includes(category)) {
@@ -114,7 +148,7 @@ export default function Profile() {
     }
   };
 
-  if (loading) {
+  if (loading || authLoading) {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
         <Loader2 className="w-10 h-10 text-trek-green animate-spin" />
@@ -146,9 +180,21 @@ export default function Profile() {
   return (
     <div className="max-w-5xl mx-auto space-y-12 pb-20">
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-4xl font-display font-bold text-zinc-900 dark:text-white mb-2">Travel Profile</h2>
-          <p className="text-zinc-500 dark:text-zinc-400">Customize how we curate your travel experiences.</p>
+        <div className="flex items-center gap-6">
+          <div className="relative">
+            {user.photoURL ? (
+              <img src={user.photoURL} alt={user.displayName || "Profile"} className="w-20 h-20 rounded-full border-4 border-white dark:border-zinc-900 shadow-xl object-cover" referrerPolicy="no-referrer" />
+            ) : (
+              <div className="w-20 h-20 rounded-full bg-trek-green text-white flex items-center justify-center text-3xl font-display font-bold shadow-xl border-4 border-white dark:border-zinc-900">
+                {(user.displayName || user.email || 'A')[0].toUpperCase()}
+              </div>
+            )}
+            <div className="absolute inset-0 rounded-full shadow-[inset_0_0_0_2px_rgba(42,139,116,0.2)] pointer-events-none" />
+          </div>
+          <div>
+            <h2 className="text-4xl font-display font-bold text-zinc-900 dark:text-white mb-2">Travel Profile</h2>
+            <p className="text-zinc-500 dark:text-zinc-400">Customize how we curate your travel experiences.</p>
+          </div>
         </div>
         <motion.button
           whileHover={{ scale: 1.05 }}
@@ -357,10 +403,56 @@ export default function Profile() {
           </div>
           
           {likedPlaces.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-              {likedPlaces.map((place) => (
-                <div key={place.place_id} onClick={() => setSelectedPlace(place)} className="cursor-pointer h-full">
-                  <PlaceCard place={place} isLiked={true} />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+              {likedPlaces.map((item) => (
+                <div key={item.interactionId} className="bg-white dark:bg-zinc-800/80 rounded-2xl p-5 shadow-sm border border-zinc-100 dark:border-zinc-700 flex flex-col gap-4">
+                  <div className="flex gap-4 items-start">
+                      <PlaceImage place={item.place} className="w-24 h-24 rounded-xl object-cover shadow-sm" />
+                    <div className="flex-1">
+                      <h4 className="font-bold text-lg dark:text-white line-clamp-1">{item.place.name}</h4>
+                      <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-2">{item.place.location.city}, {item.place.location.country}</p>
+                      <button 
+                        onClick={() => setSelectedPlace(item.place)} 
+                        className="text-sm text-trek-green hover:text-trek-dark font-bold flex items-center gap-1 transition-colors"
+                      >
+                        Go to Place Details <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-zinc-50 dark:bg-zinc-900/50 rounded-xl p-4 space-y-4 border border-zinc-100 dark:border-zinc-800">
+                    <div>
+                      <label className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-2 block">Your Rating</label>
+                      <div className="flex gap-1">
+                        {[1, 2, 3, 4, 5].map(star => (
+                          <Star 
+                            key={star} 
+                            onClick={() => handleInteractionUpdate(item.interactionId, 'rating', star)}
+                            className={`w-6 h-6 cursor-pointer transition-colors ${
+                              item.rating >= star 
+                                ? 'fill-yellow-400 text-yellow-400' 
+                                : 'text-zinc-300 dark:text-zinc-600 hover:text-yellow-200'
+                            }`} 
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-2 block">Personal Notes</label>
+                      <textarea
+                        value={item.notes}
+                        onChange={(e) => {
+                          setLikedPlaces(prev => prev.map(p => 
+                            p.interactionId === item.interactionId ? { ...p, notes: e.target.value } : p
+                          ));
+                        }}
+                        onBlur={(e) => handleInteractionUpdate(item.interactionId, 'notes', e.target.value)}
+                        className="w-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-trek-green/50 dark:text-white resize-none"
+                        placeholder="Add your personal notes, memories, or tips here..."
+                        rows={3}
+                      />
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>

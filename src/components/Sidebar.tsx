@@ -83,6 +83,33 @@ export default function Sidebar({ activeTab, setActiveTab, isDarkMode, setIsDark
 
   return (
     <>
+      {/* Mobile Top Header */}
+      <div className="md:hidden sticky top-0 left-0 right-0 z-50 glass border-b border-zinc-200 dark:border-zinc-800 p-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-gradient-primary rounded-xl flex items-center justify-center shadow-lg shadow-trek-green/20">
+            <Plane className="text-white w-6 h-6 -rotate-45" />
+          </div>
+          <h1 className="text-2xl font-display font-black tracking-tight text-gradient">TREK</h1>
+        </div>
+        {user && (
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-bold truncate dark:text-white max-w-[100px]">{user.displayName}</span>
+            <div className="w-10 h-10 rounded-full border-2 border-white dark:border-zinc-800 shadow-sm bg-trek-green/10 flex items-center justify-center text-trek-green font-bold overflow-hidden">
+              {user.photoURL ? (
+                <img
+                  src={user.photoURL}
+                  alt={user.displayName || ''}
+                  className="w-full h-full object-cover"
+                  referrerPolicy="no-referrer"
+                />
+              ) : (
+                user.displayName?.charAt(0).toUpperCase() || 'U'
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Desktop Sidebar */}
       <div className="hidden md:flex w-72 h-screen glass border-r border-zinc-200 dark:border-zinc-800 flex-col p-6 fixed left-0 top-0 z-50 transition-colors duration-500">
         <div className="flex items-center justify-between mb-12 px-2">
@@ -139,12 +166,18 @@ export default function Sidebar({ activeTab, setActiveTab, isDarkMode, setIsDark
         <div className="mt-auto pt-6 border-t border-zinc-100 dark:border-zinc-800">
           {user ? (
             <div className="flex items-center gap-4 px-2">
-              <img
-                src={user.photoURL || ''}
-                alt={user.displayName || ''}
-                className="w-10 h-10 rounded-full border-2 border-white dark:border-zinc-800 shadow-sm"
-                referrerPolicy="no-referrer"
-              />
+              <div className="w-10 h-10 rounded-full border-2 border-white dark:border-zinc-800 shadow-sm bg-trek-green/10 flex items-center justify-center text-trek-green font-bold overflow-hidden shrink-0">
+                {user.photoURL ? (
+                  <img
+                    src={user.photoURL}
+                    alt={user.displayName || ''}
+                    className="w-full h-full object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  user.displayName?.charAt(0).toUpperCase() || 'U'
+                )}
+              </div>
               <div className="flex-1 min-w-0 text-left">
                 <p className="text-sm font-bold truncate dark:text-white">{user.displayName}</p>
                 <button

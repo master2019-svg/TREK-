@@ -13,11 +13,14 @@ import Friends from './components/Friends';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { motion, AnimatePresence } from 'motion/react';
 import { Plane } from 'lucide-react';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { auth } from './firebase';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('discover');
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [showIntro, setShowIntro] = useState(true);
+  const [user] = useAuthState(auth);
 
   useEffect(() => {
     const timer = setTimeout(() => setShowIntro(false), 2500);
@@ -91,7 +94,27 @@ export default function App() {
           setIsDarkMode={setIsDarkMode}
         />
         
-        <main className="flex-1 w-full md:ml-72 p-6 pb-28 md:p-12 md:pb-12 z-10">
+        <main className="flex-1 w-full md:ml-72 p-6 pb-28 md:p-12 md:pb-12 z-10 relative">
+          
+          {/* Desktop Global Header */}
+          {user && (
+            <div className="hidden md:flex absolute top-6 right-8 lg:right-12 z-50 items-center gap-3 glass px-5 py-2.5 rounded-full shadow-lg">
+              <span className="text-sm font-bold dark:text-white">{user.displayName || user.email?.split('@')[0]}</span>
+              <div className="w-9 h-9 rounded-full border-2 border-white dark:border-zinc-800 shadow-sm bg-trek-green/10 flex items-center justify-center text-trek-green font-bold overflow-hidden shrink-0">
+                {user.photoURL ? (
+                  <img
+                    src={user.photoURL}
+                    alt={user.displayName || ''}
+                    className="w-full h-full object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  (user.displayName || user.email || 'U').charAt(0).toUpperCase()
+                )}
+              </div>
+            </div>
+          )}
+
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}

@@ -5,6 +5,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Star, MapPin, Filter, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import PlaceImage from './PlaceImage';
 
 // Fix for default marker icons in Leaflet
 // @ts-ignore
@@ -44,22 +45,49 @@ export default function PlacesMap({ places, center, zoom = 3 }: PlacesMapProps) 
   const [activeCategory, setActiveCategory] = useState('All');
   const [activeBudget, setActiveBudget] = useState('All');
 
+  // Helper to extract coordinates safely
+  const getCoords = (p: Place) => {
+    if (!p.location) return { lat: NaN, lng: NaN };
+    const lat = Number(p.location.coordinates?.lat || p.location.latitude);
+    const lng = Number(p.location.coordinates?.lng || p.location.longitude);
+    return { lat, lng };
+  };
+
   // Filter out places without valid coordinates
-  const validPlaces = places.filter(
-    p => p.location && typeof p.location.latitude === 'number' && typeof p.location.longitude === 'number'
-  );
+  const validPlaces = places.filter(p => {
+    const { lat, lng } = getCoords(p);
+    return !isNaN(lat) && !isNaN(lng);
+  });
 
   const filteredPlaces = validPlaces.filter(p => {
-    const matchCategory = activeCategory === 'All' || p.category?.toLowerCase() === activeCategory.toLowerCase();
-    const matchBudget = activeBudget === 'All' || p.budget?.toLowerCase() === activeBudget.toLowerCase();
+    const pCategory = p.category?.toLowerCase() || '';
+    const pTags = p.tags?.map(t => t.toLowerCase()) || [];
+    const pBudget = p.budget?.toLowerCase() || '';
+    
+    // Category Match (checks exact category or if it's in tags)
+    const matchCategory = activeCategory === 'All' || 
+      pCategory.includes(activeCategory.toLowerCase()) || 
+      pTags.some(tag => tag.includes(activeCategory.toLowerCase()));
+      
+    // Budget Match logic mapping
+    const budgetMap: Record<string, string[]> = {
+      'low': ['low', 'budget', 'cheap', '$', 'inexpensive'],
+      'medium': ['medium', 'moderate', '$$'],
+      'high': ['high', 'expensive', '$$$'],
+      'luxury': ['luxury', 'splurge', '$$$$']
+    };
+    
+    const targetBudgets = activeBudget !== 'All' ? (budgetMap[activeBudget.toLowerCase()] || [activeBudget.toLowerCase()]) : [];
+    const matchBudget = activeBudget === 'All' || targetBudgets.some(b => pBudget.includes(b));
+    
     return matchCategory && matchBudget;
   });
 
   // Calculate center based on places if not provided
   const mapCenter = center || (filteredPlaces.length > 0 
-    ? [filteredPlaces[0].location.latitude, filteredPlaces[0].location.longitude] as [number, number]
+    ? [getCoords(filteredPlaces[0]).lat, getCoords(filteredPlaces[0]).lng] as [number, number]
     : validPlaces.length > 0 
-      ? [validPlaces[0].location.latitude, validPlaces[0].location.longitude] as [number, number]
+      ? [getCoords(validPlaces[0]).lat, getCoords(validPlaces[0]).lng] as [number, number]
       : [20, 0] as [number, number]);
 
   return (
@@ -150,10 +178,13 @@ export default function PlacesMap({ places, center, zoom = 3 }: PlacesMapProps) 
           url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
         />
-        {filteredPlaces.map((place) => (
+        {filteredPlaces.map((place) => {
+          const { lat, lng } = getCoords(place);
+          if (isNaN(lat) || isNaN(lng)) return null;
+          return (
           <Marker 
             key={place.place_id} 
-            position={[place.location.latitude, place.location.longitude]}
+            position={[lat, lng]}
           >
             <Popup className="rounded-2xl overflow-hidden p-0 custom-popup">
               <motion.div 
@@ -163,15 +194,13 @@ export default function PlacesMap({ places, center, zoom = 3 }: PlacesMapProps) 
                 className="w-64"
               >
                 <div className="h-32 w-full relative">
-                  <img 
-                    src={place.image_url || `https://source.unsplash.com/800x600/?${encodeURIComponent(place.category || 'travel')}`}
-                    alt={place.name}
+                  <PlaceImage 
+                    place={place}
                     className="w-full h-full object-cover"
-                    referrerPolicy="no-referrer"
                   />
                   <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full flex items-center gap-1">
                     <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
-                    <span className="text-xs font-bold text-zinc-900">{place.rating || '4.5'}</span>
+                    <span className="text-xs font-bold text-zinc-900">{place.average_rating || '4.5'}</span>
                   </div>
                 </div>
                 <div className="p-4 bg-white dark:bg-zinc-900">
@@ -185,7 +214,8 @@ export default function PlacesMap({ places, center, zoom = 3 }: PlacesMapProps) 
               </motion.div>
             </Popup>
           </Marker>
-        ))}
+          );
+        })}
       </MapContainer>
     </div>
   );

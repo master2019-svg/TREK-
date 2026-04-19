@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Place } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, MapPin, Star, Heart, Bookmark, Accessibility, ThumbsUp, MessageSquare } from 'lucide-react';
+import { X, MapPin, Star, Heart, Bookmark, Accessibility, ThumbsUp, MessageSquare, Share2, Check } from 'lucide-react';
+import PlaceImage from './PlaceImage';
 
 interface Review {
   id: string;
@@ -19,11 +20,12 @@ interface PlaceDetailsModalProps {
 export default function PlaceDetailsModal({ place, isOpen, onClose }: PlaceDetailsModalProps) {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loadingReviews, setLoadingReviews] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (isOpen && place) {
       setLoadingReviews(true);
-      fetch(`/api/reviews/${place.place_id || place._id}`)
+      fetch(`/api/reviews/${place.place_id}`)
         .then(res => res.json())
         .then(data => {
           if (data.data && data.data.length > 0) {
@@ -72,6 +74,29 @@ export default function PlaceDetailsModal({ place, isOpen, onClose }: PlaceDetai
     }
   }, [isOpen, place]);
 
+  const handleShare = async () => {
+    if (!place) return;
+    
+    const shareData = {
+      title: `Check out ${place.name} on Trek`,
+      text: `I found ${place.name} in ${place.location.city}, ${place.location.country} on Trek! It looks amazing.`,
+      url: window.location.href,
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        console.log('Error sharing:', err);
+      }
+    } else {
+      // Fallback
+      navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
   if (!place) return null;
 
   return (
@@ -86,19 +111,18 @@ export default function PlaceDetailsModal({ place, isOpen, onClose }: PlaceDetai
             className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100]"
           />
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            initial={{ opacity: 0, scale: 0.9, y: 40 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            exit={{ opacity: 0, scale: 0.9, y: 40 }}
+            transition={{ type: "spring", damping: 25, stiffness: 300 }}
             className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-zinc-900 rounded-[2rem] shadow-2xl z-[101] custom-scrollbar"
           >
             <div className="relative h-72">
-              <img
-                src={place.image || `https://source.unsplash.com/800x600/?${encodeURIComponent(place.category || 'travel')}`}
-                alt={place.name}
+              <PlaceImage
+                place={place}
                 className="w-full h-full object-cover"
-                referrerPolicy="no-referrer"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-transparent to-transparent opacity-80" />
+              <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-zinc-900/40 to-transparent opacity-90" />
               
               <button
                 onClick={onClose}
@@ -108,28 +132,53 @@ export default function PlaceDetailsModal({ place, isOpen, onClose }: PlaceDetai
               </button>
 
               <div className="absolute top-4 right-4 bg-teal-600 text-white px-4 py-1.5 rounded-full font-bold text-sm shadow-lg">
-                UNDER DEPLOYMENT COMING SOON
+                MUST VISIT
               </div>
 
               <div className="absolute bottom-6 left-6 right-6">
                 <h2 className="text-4xl font-display font-black text-white mb-2 leading-tight">{place.name}</h2>
-                <div className="flex items-center justify-between">
+                <div className="flex items-end justify-between flex-wrap gap-4">
                   <div className="flex items-center gap-2 text-zinc-200 font-medium">
                     <MapPin className="w-5 h-5 text-teal-400" />
                     <span>{place.location.city}, {place.location.country}</span>
                   </div>
                   
-                  {place.location.coordinates && (
-                    <a
-                      href={`https://www.google.com/maps/dir/?api=1&destination=${place.location.coordinates.lat},${place.location.coordinates.lng}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="bg-trek-green hover:bg-trek-dark text-white px-4 py-2 rounded-xl font-bold text-sm shadow-lg transition-colors flex items-center gap-2"
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    {place.location && (() => {
+                      const lat = Number(place.location.coordinates?.lat || place.location.latitude);
+                      const lng = Number(place.location.coordinates?.lng || place.location.longitude);
+                      if (!isNaN(lat) && !isNaN(lng)) {
+                        return (
+                          <a
+                            href={`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="bg-trek-green hover:bg-trek-dark text-white px-4 py-2 rounded-xl font-bold text-sm shadow-lg transition-colors flex items-center justify-center gap-2"
+                          >
+                            <MapPin className="w-4 h-4" />
+                            Get Directions
+                          </a>
+                        );
+                      }
+                      return null;
+                    })()}
+                    <button
+                      onClick={handleShare}
+                      className="bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/20 text-white px-4 py-2 rounded-xl font-bold text-sm shadow-lg transition-colors flex items-center justify-center gap-2"
                     >
-                      <MapPin className="w-4 h-4" />
-                      Get Directions
-                    </a>
-                  )}
+                      {copied ? (
+                        <>
+                          <Check className="w-4 h-4 text-green-400" />
+                          <span className="text-green-400">Copied!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Share2 className="w-4 h-4" />
+                          Share Place
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

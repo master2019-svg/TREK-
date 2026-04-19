@@ -4,6 +4,7 @@ import { Heart, Bookmark, MapPin, Star, Accessibility } from 'lucide-react';
 import { motion } from 'motion/react';
 import { auth, db } from '../firebase';
 import { doc, setDoc, deleteDoc } from 'firebase/firestore';
+import PlaceImage from './PlaceImage';
 
 interface PlaceCardProps {
   place: Place;
@@ -68,11 +69,9 @@ export default function PlaceCard({ place, isLiked: initialLiked = false, isSave
       <div className="absolute inset-0 bg-gradient-to-br from-trek-green/5 via-teal-500/5 to-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
       
       <div className="relative h-64 overflow-hidden">
-        <img
-          src={place.image || `https://source.unsplash.com/800x600/?${encodeURIComponent(place.category || 'travel')}`}
-          alt={place.name}
+        <PlaceImage
+          place={place}
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-          referrerPolicy="no-referrer"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80" />
         

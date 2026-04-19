@@ -1,63 +1,63 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap');
 @import "tailwindcss";
 
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Outfit", sans-serif;
+  --font-display: "Playfair Display", serif;
   --color-trek-green: #2A8B74;
   --color-trek-dark: #1E6B58;
-  --color-trek-cream: #F4F1E1;
+  --color-trek-cream: #f5f2ed;
 }
 
 @layer base {
   :root {
-    --bg-color: #F8F9FA;
-    --text-color: #18181b;
-    --glass-bg: rgba(255, 255, 255, 0.7);
-    --glass-border: rgba(255, 255, 255, 0.5);
+    --bg-color: #f5f2ed;
+    --text-color: #1a1a1a;
+    --glass-bg: rgba(255, 255, 255, 0.75);
+    --glass-border: rgba(0, 0, 0, 0.04);
   }
 
   .dark {
-    --bg-color: #09090b;
+    --bg-color: #050505;
     --text-color: #fafafa;
-    --glass-bg: rgba(24, 24, 27, 0.65);
+    --glass-bg: rgba(15, 15, 15, 0.65);
     --glass-border: rgba(255, 255, 255, 0.08);
   }
 
   body {
     background-color: var(--bg-color);
     color: var(--text-color);
-    @apply font-sans antialiased transition-colors duration-500;
+    @apply font-sans antialiased transition-colors duration-500 font-light;
   }
 }
 
 .glass {
   background-color: var(--glass-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   border: 1px solid var(--glass-border);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 40px rgba(0, 0, 0, 0.03);
 }
 
 .glass-card {
   background-color: var(--glass-bg);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
   border: 1px solid var(--glass-border);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.05);
 }
 
 .card-hover {
-  @apply transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 hover:border-trek-green/40 dark:hover:border-trek-green/40;
+  @apply transition-all duration-500 hover:shadow-2xl hover:-translate-y-1.5;
 }
 
 @layer utilities {
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-trek-green via-teal-500 to-emerald-500;
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-[#2A8B74] to-[#C5A880];
   }
 
   .bg-gradient-primary {
-    @apply bg-gradient-to-br from-trek-green via-teal-500 to-emerald-600;
+    @apply bg-gradient-to-br from-[#1E4237] via-[#2A8B74] to-[#C5A880];
   }
   
   .bg-grid-pattern {

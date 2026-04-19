@@ -7,8 +7,12 @@ export interface Place {
   location: {
     city: string;
     country: string;
-    latitude: number;
-    longitude: number;
+    latitude?: number;
+    longitude?: number;
+    coordinates?: {
+      lat: number;
+      lng: number;
+    }
   };
   accessibility: string[];
   average_rating: number;

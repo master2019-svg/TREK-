@@ -367,7 +367,7 @@ async function startServer() {
       
       const data = places.map((p: any, idx: number) => ({
         place: p,
-        next_destination: idx < places.length - 1 ? places[idx + 1].name : null
+        next_destination: idx < places.length - 1 ? (places[idx + 1] as any).name : null
       }));
 
       res.json({ data });

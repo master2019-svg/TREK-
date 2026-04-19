@@ -187,9 +187,9 @@ export default function Search() {
               }}
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
             >
-              {results.map((place) => (
+              {results.map((place, idx) => (
                 <motion.div
-                  key={place.place_id}
+                  key={place.place_id || place._id || idx}
                   variants={{
                     hidden: { opacity: 0, y: 30, scale: 0.95 },
                     show: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", bounce: 0.4 } }
