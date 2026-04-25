@@ -3,7 +3,7 @@ import { auth, db } from '../firebase';
 import { doc, getDoc, setDoc, collection, query, where, getDocs, documentId, updateDoc } from 'firebase/firestore';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { TravelPreference, Place } from '../types';
-import { Save, Loader2, CheckCircle2, Globe, DollarSign, Users, Accessibility, Tag, LayoutGrid, User as UserIcon, Heart, Star, ChevronRight } from 'lucide-react';
+import { Save, Loader2, CheckCircle2, Globe, DollarSign, Users, Accessibility, Tag, LayoutGrid, User as UserIcon, Heart, Star, ChevronRight, Shield, Moon, Compass, Coffee, Lock, Bell } from 'lucide-react';
 import { motion } from 'motion/react';
 import LoginButton from './LoginButton';
 import PlaceCard from './PlaceCard';
@@ -30,7 +30,12 @@ export default function Profile() {
     budget: 'medium',
     group_type: 'solo',
     categories: [],
-    tags: []
+    tags: [],
+    notification_preferences: {
+      followers: true,
+      messages: true,
+      recommendations: true
+    }
   });
   const [likedPlaces, setLikedPlaces] = useState<LikedPlaceData[]>([]);
   const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
@@ -152,7 +157,7 @@ export default function Profile() {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
         <Loader2 className="w-10 h-10 text-trek-green animate-spin" />
-        <p className="text-zinc-500 dark:text-zinc-400 font-medium">Loading your profile...</p>
+        <p className="text-[#767676] dark:text-[#111111] dark:text-[#F0F0F0] font-medium">Loading your profile...</p>
       </div>
     );
   }
@@ -160,12 +165,12 @@ export default function Profile() {
   if (!user) {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] text-center max-w-md mx-auto">
-        <div className="w-24 h-24 bg-gradient-primary rounded-3xl flex items-center justify-center mb-8 shadow-xl shadow-trek-green/20">
-          <UserIcon className="w-12 h-12 text-white" />
+        <div className="w-24 h-24 bg-[#E60023] rounded-3xl flex items-center justify-center mb-8 shadow-[0_0_30px_rgba(212,175,55,0.4)]">
+          <UserIcon className="w-12 h-12 text-[#0D1117]" />
         </div>
-        <h2 className="text-4xl font-display font-black mb-4 dark:text-white">Your Travel Identity</h2>
-        <p className="text-zinc-500 dark:text-zinc-400 text-lg leading-relaxed mb-8">
-          Sign in to customize your travel preferences and get personalized recommendations.
+        <h2 className="text-4xl font-display font-black mb-4 text-[#111111] dark:text-[#F0F0F0]">Dossier</h2>
+        <p className="text-[#111111] dark:text-[#F0F0F0] text-lg leading-relaxed mb-8">
+          Authenticate to establish your travel identity and sync preferences.
         </p>
         <LoginButton />
       </div>
@@ -178,22 +183,21 @@ export default function Profile() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-12 pb-20">
+    <div className="max-w-5xl mx-auto space-y-12 pb-20 mt-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-6">
           <div className="relative">
             {user.photoURL ? (
-              <img src={user.photoURL} alt={user.displayName || "Profile"} className="w-20 h-20 rounded-full border-4 border-white dark:border-zinc-900 shadow-xl object-cover" referrerPolicy="no-referrer" />
+              <img src={user.photoURL} alt={user.displayName || "Profile"} className="w-20 h-20 rounded-full border border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.3)] object-cover" referrerPolicy="no-referrer" />
             ) : (
-              <div className="w-20 h-20 rounded-full bg-trek-green text-white flex items-center justify-center text-3xl font-display font-bold shadow-xl border-4 border-white dark:border-zinc-900">
+              <div className="w-20 h-20 rounded-full bg-white dark:bg-[#111111] border border-[#E9E9E9] dark:border-[#333333] text-[#E60023] flex items-center justify-center text-3xl font-display font-bold shadow-xl">
                 {(user.displayName || user.email || 'A')[0].toUpperCase()}
               </div>
             )}
-            <div className="absolute inset-0 rounded-full shadow-[inset_0_0_0_2px_rgba(42,139,116,0.2)] pointer-events-none" />
           </div>
           <div>
-            <h2 className="text-4xl font-display font-bold text-zinc-900 dark:text-white mb-2">Travel Profile</h2>
-            <p className="text-zinc-500 dark:text-zinc-400">Customize how we curate your travel experiences.</p>
+            <h2 className="text-4xl font-display font-bold text-[#111111] dark:text-[#F0F0F0] tracking-tight mb-1">Dossier Profile</h2>
+            <p className="text-[#767676] dark:text-[#A0A0A0] font-mono text-sm uppercase tracking-widest">Clearance Level: VIP</p>
           </div>
         </div>
         <motion.button
@@ -201,10 +205,10 @@ export default function Profile() {
           whileTap={{ scale: 0.95 }}
           onClick={handleSave}
           disabled={saving}
-          className="px-8 py-4 bg-trek-green text-white rounded-full font-bold flex items-center gap-3 hover:bg-trek-dark transition-all shadow-lg shadow-trek-green/30 disabled:opacity-50"
+          className="px-8 py-3 bg-[#E60023] text-[#0D1117] rounded-xl font-bold flex items-center gap-3 hover:bg-[#b8952b] transition-all shadow-[0_0_15px_rgba(212,175,55,0.4)] disabled:opacity-50"
         >
           {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : saved ? <CheckCircle2 className="w-5 h-5" /> : <Save className="w-5 h-5" />}
-          {saved ? 'Saved' : 'Finish'}
+          {saved ? 'Secured' : 'Lock Profile'}
         </motion.button>
       </div>
 
@@ -218,34 +222,34 @@ export default function Profile() {
         className="grid grid-cols-1 md:grid-cols-3 gap-6"
       >
         {/* Nickname */}
-        <motion.div variants={itemVariants} className="glass p-8 rounded-[2rem] space-y-6 md:col-span-3 border-t-4 border-t-trek-green">
+        <motion.div variants={itemVariants} className="bg-white dark:bg-[#111111] border border-[#E9E9E9] dark:border-[#333333] p-8 rounded-[2rem] space-y-6 md:col-span-3 border-t-2 border-t-[#E60023]">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-12 h-12 rounded-2xl bg-trek-green/10 flex items-center justify-center">
-              <UserIcon className="w-6 h-6 text-trek-green" />
+            <div className="w-10 h-10 rounded-xl bg-[#E9E9E9] dark:bg-[#333333] border border-[#E9E9E9] dark:border-[#333333] flex items-center justify-center">
+              <UserIcon className="w-5 h-5 text-[#E60023]" />
             </div>
             <div>
-              <h3 className="text-2xl font-display font-bold dark:text-white">Your Nickname</h3>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">This is how you will appear to other travelers.</p>
+              <h3 className="text-xl font-display font-bold text-[#111111] dark:text-[#F0F0F0]">Callsign</h3>
+              <p className="text-sm text-[#767676] dark:text-[#A0A0A0]">Your network alias.</p>
             </div>
           </div>
           <input
             type="text"
-            placeholder="Choose a unique nickname..."
+            placeholder="Choose callsign..."
             value={nickname}
             onChange={(e) => setNickname(e.target.value)}
-            className="w-full p-5 bg-white/50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-2xl focus:outline-none focus:ring-2 focus:ring-trek-green transition-all dark:text-white shadow-inner text-lg font-medium"
+            className="w-full p-4 bg-[#E9E9E9] dark:bg-[#333333] border border-[#E9E9E9] dark:border-[#333333] rounded-xl focus:outline-none focus:border-[#D4AF37]/50 transition-all text-[#111111] dark:text-[#F0F0F0] text-lg tracking-wide"
           />
         </motion.div>
 
         {/* Categories */}
-        <motion.div variants={itemVariants} className="glass p-8 rounded-[2rem] space-y-6 md:col-span-2">
+        <motion.div variants={itemVariants} className="bg-white dark:bg-[#111111] border border-[#E9E9E9] dark:border-[#333333] p-8 rounded-[2rem] space-y-6 md:col-span-2">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 rounded-2xl bg-teal-500/10 flex items-center justify-center">
-              <LayoutGrid className="w-6 h-6 text-teal-500" />
+            <div className="w-10 h-10 rounded-xl bg-[#E9E9E9] dark:bg-[#333333] border border-[#E9E9E9] dark:border-[#333333] flex items-center justify-center">
+              <LayoutGrid className="w-5 h-5 text-[#E60023]" />
             </div>
-            <h3 className="text-2xl font-display font-bold dark:text-white">Select Categories</h3>
+            <h3 className="text-xl font-display font-bold text-[#111111] dark:text-[#F0F0F0]">Target Sectors</h3>
           </div>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-2">
             {ALL_CATEGORIES.map((category) => {
               const isSelected = prefs.categories?.includes(category);
               return (
@@ -254,13 +258,13 @@ export default function Profile() {
                   whileTap={{ scale: 0.95 }}
                   key={category}
                   onClick={() => toggleCategory(category)}
-                  className={`px-5 py-3 rounded-full font-bold text-sm transition-all duration-300 flex items-center gap-2 ${
+                  className={`px-4 py-2 text-sm rounded-lg font-bold transition-all duration-300 flex items-center gap-2 ${
                     isSelected 
-                      ? 'bg-trek-green text-white shadow-md shadow-trek-green/30' 
-                      : 'bg-white/80 dark:bg-zinc-800/80 text-zinc-600 dark:text-zinc-300 hover:bg-white dark:hover:bg-zinc-700 shadow-sm border border-zinc-100 dark:border-zinc-700'
+                      ? 'bg-[#E60023] text-white shadow-sm border border-[#E60023]' 
+                      : 'bg-[#E9E9E9] dark:bg-[#333333] text-[#111111] dark:text-[#F0F0F0] hover:text-[#111111] dark:text-[#F0F0F0] border border-[#E9E9E9] dark:border-[#333333]'
                   }`}
                 >
-                  {isSelected && <CheckCircle2 className="w-4 h-4" />}
+                  {isSelected && <CheckCircle2 className="w-3 h-3" />}
                   {category}
                 </motion.button>
               );
@@ -269,20 +273,20 @@ export default function Profile() {
         </motion.div>
 
         {/* Budget */}
-        <motion.div variants={itemVariants} className="glass p-8 rounded-[2rem] space-y-6 md:col-span-1">
+        <motion.div variants={itemVariants} className="bg-white dark:bg-[#111111] border border-[#E9E9E9] dark:border-[#333333] p-8 rounded-[2rem] space-y-6 md:col-span-1">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center">
-              <DollarSign className="w-6 h-6 text-emerald-500" />
+            <div className="w-10 h-10 rounded-xl bg-[#E9E9E9] dark:bg-[#333333] border border-[#E9E9E9] dark:border-[#333333] flex items-center justify-center">
+              <DollarSign className="w-5 h-5 text-[#E60023]" />
             </div>
-            <h3 className="text-xl font-display font-bold dark:text-white">Budget</h3>
+            <h3 className="text-xl font-display font-bold text-[#111111] dark:text-[#F0F0F0]">Funding</h3>
           </div>
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-2">
             {['low', 'medium', 'high', 'luxury'].map((level) => (
               <button
                 key={level}
                 onClick={() => setPrefs({ ...prefs, budget: level as any })}
-                className={`py-3 px-4 rounded-xl font-bold capitalize transition-all text-left flex justify-between items-center ${
-                  prefs.budget === level ? 'bg-trek-green text-white shadow-md shadow-trek-green/30' : 'bg-white/50 dark:bg-zinc-900/50 text-zinc-500 dark:text-zinc-400 hover:bg-white dark:hover:bg-zinc-800 shadow-sm border border-zinc-100 dark:border-zinc-800'
+                className={`py-3 px-4 rounded-xl font-bold uppercase tracking-wider text-xs transition-all text-left flex justify-between items-center ${
+                  prefs.budget === level ? 'bg-[#E60023] text-[#0D1117]' : 'bg-[#E9E9E9] dark:bg-[#333333] text-[#767676] dark:text-[#A0A0A0] border border-[#E9E9E9] dark:border-[#333333]'
                 }`}
               >
                 {level}
@@ -293,14 +297,14 @@ export default function Profile() {
         </motion.div>
 
         {/* Tags */}
-        <motion.div variants={itemVariants} className="glass p-8 rounded-[2rem] space-y-6 md:col-span-3">
+        <motion.div variants={itemVariants} className="bg-white dark:bg-[#111111] border border-[#E9E9E9] dark:border-[#333333] p-8 rounded-[2rem] space-y-6 md:col-span-3">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 flex items-center justify-center">
-              <Tag className="w-6 h-6 text-cyan-500" />
+            <div className="w-10 h-10 rounded-xl bg-[#E9E9E9] dark:bg-[#333333] border border-[#E9E9E9] dark:border-[#333333] flex items-center justify-center">
+              <Tag className="w-5 h-5 text-[#E60023]" />
             </div>
-            <h3 className="text-2xl font-display font-bold dark:text-white">Select Tags</h3>
+            <h3 className="text-xl font-display font-bold text-[#111111] dark:text-[#F0F0F0]">Intel Tags</h3>
           </div>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-2">
             {ALL_TAGS.map((tag) => {
               const isSelected = prefs.tags?.includes(tag);
               return (
@@ -309,13 +313,13 @@ export default function Profile() {
                   whileTap={{ scale: 0.95 }}
                   key={tag}
                   onClick={() => toggleTag(tag)}
-                  className={`px-4 py-2 rounded-xl font-bold text-sm transition-all duration-300 flex items-center gap-2 ${
+                  className={`px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-wider transition-all duration-300 flex items-center gap-2 ${
                     isSelected 
-                      ? 'bg-trek-green text-white shadow-md shadow-trek-green/30' 
-                      : 'bg-white/50 dark:bg-zinc-800/50 text-zinc-600 dark:text-zinc-300 hover:bg-white dark:hover:bg-zinc-700 shadow-sm border border-zinc-100 dark:border-zinc-700'
+                      ? 'bg-[#E60023] text-white text-[#E60023] border border-[#E60023]' 
+                      : 'bg-[#E9E9E9] dark:bg-[#333333] text-[#767676] dark:text-[#A0A0A0] border border-[#E9E9E9] dark:border-[#333333] hover:border-[#FFFFFF30]'
                   }`}
                 >
-                  {isSelected && <CheckCircle2 className="w-4 h-4" />}
+                  {isSelected && <CheckCircle2 className="w-3 h-3" />}
                   {tag}
                 </motion.button>
               );
@@ -324,53 +328,53 @@ export default function Profile() {
         </motion.div>
 
         {/* Destinations */}
-        <motion.div variants={itemVariants} className="glass p-8 rounded-[2rem] space-y-6 md:col-span-1">
+        <motion.div variants={itemVariants} className="bg-white dark:bg-[#111111] border border-[#E9E9E9] dark:border-[#333333] p-8 rounded-[2rem] space-y-6 md:col-span-1">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center">
-              <Globe className="w-6 h-6 text-blue-500" />
+            <div className="w-10 h-10 rounded-xl bg-[#E9E9E9] dark:bg-[#333333] border border-[#E9E9E9] dark:border-[#333333] flex items-center justify-center">
+              <Globe className="w-5 h-5 text-[#E60023]" />
             </div>
-            <h3 className="text-xl font-display font-bold dark:text-white">Destinations</h3>
+            <h3 className="text-xl font-display font-bold text-[#111111] dark:text-[#F0F0F0]">Coordinates</h3>
           </div>
           <input
             type="text"
             placeholder="e.g. France, Japan"
             value={prefs.destinations?.join(', ')}
             onChange={(e) => setPrefs({ ...prefs, destinations: e.target.value.split(',').map(s => s.trim()) })}
-            className="w-full p-4 bg-white/50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-2xl focus:outline-none focus:ring-2 focus:ring-trek-green transition-all dark:text-white shadow-inner"
+            className="w-full p-4 bg-[#E9E9E9] dark:bg-[#333333] border border-[#E9E9E9] dark:border-[#333333] rounded-xl focus:outline-none focus:border-[#D4AF37]/50 transition-all text-[#111111] dark:text-[#F0F0F0]"
           />
         </motion.div>
 
         {/* Group Type */}
-        <motion.div variants={itemVariants} className="glass p-8 rounded-[2rem] space-y-6 md:col-span-1">
+        <motion.div variants={itemVariants} className="bg-white dark:bg-[#111111] border border-[#E9E9E9] dark:border-[#333333] p-8 rounded-[2rem] space-y-6 md:col-span-1">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center">
-              <Users className="w-6 h-6 text-indigo-500" />
+            <div className="w-10 h-10 rounded-xl bg-[#E9E9E9] dark:bg-[#333333] border border-[#E9E9E9] dark:border-[#333333] flex items-center justify-center">
+              <Users className="w-5 h-5 text-[#E60023]" />
             </div>
-            <h3 className="text-xl font-display font-bold dark:text-white">Travel Group</h3>
+            <h3 className="text-xl font-display font-bold text-[#111111] dark:text-[#F0F0F0]">Squad Size</h3>
           </div>
           <select
             value={prefs.group_type}
             onChange={(e) => setPrefs({ ...prefs, group_type: e.target.value })}
-            className="w-full p-4 bg-white/50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-2xl focus:outline-none focus:ring-2 focus:ring-trek-green transition-all appearance-none dark:text-white shadow-inner font-bold"
+            className="w-full p-4 bg-[#E9E9E9] dark:bg-[#333333] border border-[#E9E9E9] dark:border-[#333333] rounded-xl focus:outline-none focus:border-[#D4AF37]/50 transition-all appearance-none text-[#111111] dark:text-[#F0F0F0] font-bold"
           >
-            <option value="solo">Solo Traveler</option>
-            <option value="couple">Couple</option>
-            <option value="family">Family with Kids</option>
-            <option value="friends">Group of Friends</option>
+            <option value="solo">Lone Wolf</option>
+            <option value="couple">Duo</option>
+            <option value="family">Family Unit</option>
+            <option value="friends">Squad</option>
           </select>
         </motion.div>
 
         {/* Accessibility */}
-        <motion.div variants={itemVariants} className="glass p-8 rounded-[2rem] space-y-6 md:col-span-1">
+        <motion.div variants={itemVariants} className="bg-white dark:bg-[#111111] border border-[#E9E9E9] dark:border-[#333333] p-8 rounded-[2rem] space-y-6 md:col-span-1">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-12 h-12 rounded-2xl bg-rose-500/10 flex items-center justify-center">
-              <Accessibility className="w-6 h-6 text-rose-500" />
+            <div className="w-10 h-10 rounded-xl bg-[#E9E9E9] dark:bg-[#333333] border border-[#E9E9E9] dark:border-[#333333] flex items-center justify-center">
+              <Accessibility className="w-5 h-5 text-[#E60023]" />
             </div>
-            <h3 className="text-xl font-display font-bold dark:text-white">Accessibility</h3>
+            <h3 className="text-xl font-display font-bold text-[#111111] dark:text-[#F0F0F0]">Support</h3>
           </div>
           <div className="space-y-3">
             {['Wheelchair Access', 'Low Mobility', 'Visual Aid', 'Hearing Support'].map((need) => (
-              <label key={need} className="flex items-center gap-3 cursor-pointer group p-2 rounded-xl hover:bg-white/50 dark:hover:bg-zinc-800/50 transition-colors">
+              <label key={need} className="flex items-center gap-3 cursor-pointer group p-2 rounded-xl hover:bg-[#E9E9E9] dark:bg-[#333333] transition-colors">
                 <input
                   type="checkbox"
                   checked={prefs.accessibility_needs?.includes(need)}
@@ -382,63 +386,108 @@ export default function Profile() {
                       setPrefs({ ...prefs, accessibility_needs: current.filter(n => n !== need) });
                     }
                   }}
-                  className="w-5 h-5 rounded-lg border-zinc-300 dark:border-zinc-700 text-trek-green focus:ring-trek-green dark:bg-zinc-900"
+                  className="w-5 h-5 rounded-md bg-[#E9E9E9] dark:bg-[#333333] border border-[#E9E9E9] dark:border-[#333333] text-[#E60023] focus:ring-[#D4AF37]"
                 />
-                <span className="text-zinc-600 dark:text-zinc-400 group-hover:text-zinc-900 dark:group-hover:text-white transition-colors font-medium">{need}</span>
+                <span className="text-[#111111] dark:text-[#F0F0F0] group-hover:text-[#111111] dark:text-[#F0F0F0] transition-colors text-sm font-bold uppercase tracking-wider">{need}</span>
               </label>
             ))}
           </div>
         </motion.div>
 
+        {/* Gamification / Notification Preferences */}
+        <motion.div variants={itemVariants} className="bg-white dark:bg-[#111111] border border-[#E9E9E9] dark:border-[#333333] p-8 rounded-[2rem] space-y-6 md:col-span-3 border-t-4 border-t-[#E60023]">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-[#E9E9E9] dark:bg-[#333333] flex items-center justify-center">
+                <Bell className="w-5 h-5 text-[#E60023]" />
+              </div>
+              <div>
+                <h3 className="text-xl font-display font-bold text-[#111111] dark:text-[#F0F0F0]">Push Notifications</h3>
+                <p className="text-sm text-[#767676] dark:text-[#A0A0A0]">Manage your alerts and updates.</p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+            {[
+              { id: 'followers', label: 'New Followers', desc: 'When someone follows you.' },
+              { id: 'messages', label: 'Direct Messages', desc: 'When you receive a message.' },
+              { id: 'recommendations', label: 'Recommendations', desc: 'Personalized travel ideas.' }
+            ].map(setting => (
+              <div key={setting.id} className="bg-[#f0f0f0] dark:bg-[#1f1f1f] rounded-2xl p-6 border border-[#E9E9E9] dark:border-[#333333] flex flex-col relative">
+                 <div className="flex justify-between items-center mb-2">
+                   <h4 className="font-bold text-[#111111] dark:text-[#F0F0F0] tracking-wide">{setting.label}</h4>
+                   <button 
+                     onClick={() => {
+                        setPrefs(prev => ({
+                          ...prev,
+                          notification_preferences: {
+                            ...prev.notification_preferences,
+                            [setting.id]: !(prev.notification_preferences as any)?.[setting.id]
+                          }
+                        }))
+                     }}
+                     className={`w-12 h-6 rounded-full transition-colors relative ${((prefs.notification_preferences as any)?.[setting.id] !== false) ? 'bg-[#E60023]' : 'bg-[#ccc]'}`}
+                   >
+                     <div className={`w-4 h-4 bg-white dark:bg-[#111111] rounded-full absolute top-1 transition-transform ${((prefs.notification_preferences as any)?.[setting.id] !== false) ? 'left-7' : 'left-1'}`} />
+                   </button>
+                 </div>
+                 <p className="text-xs text-[#767676] dark:text-[#A0A0A0]">{setting.desc}</p>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+
         {/* Liked Places Section */}
-        <motion.div variants={itemVariants} className="glass p-8 rounded-[2rem] space-y-6 md:col-span-3 border-t-4 border-t-rose-500">
+        <motion.div variants={itemVariants} className="bg-white dark:bg-[#111111] border border-[#E9E9E9] dark:border-[#333333] p-8 rounded-[2rem] space-y-6 md:col-span-3 border-t-2 border-t-[#E60023]">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-12 h-12 rounded-2xl bg-rose-500/10 flex items-center justify-center">
-              <Heart className="w-6 h-6 text-rose-500" />
+            <div className="w-10 h-10 rounded-xl bg-[#E9E9E9] dark:bg-[#333333] border border-[#E9E9E9] dark:border-[#333333] flex items-center justify-center">
+              <Heart className="w-5 h-5 text-[#E60023]" />
             </div>
             <div>
-              <h3 className="text-2xl font-display font-bold dark:text-white">Your Liked Places</h3>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">Places you've loved and saved for later.</p>
+              <h3 className="text-xl font-display font-bold text-[#111111] dark:text-[#F0F0F0]">Secured Targets</h3>
+              <p className="text-sm text-[#767676] dark:text-[#A0A0A0]">Locations archived for deployment.</p>
             </div>
           </div>
           
           {likedPlaces.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
               {likedPlaces.map((item) => (
-                <div key={item.interactionId} className="bg-white dark:bg-zinc-800/80 rounded-2xl p-5 shadow-sm border border-zinc-100 dark:border-zinc-700 flex flex-col gap-4">
-                  <div className="flex gap-4 items-start">
-                      <PlaceImage place={item.place} className="w-24 h-24 rounded-xl object-cover shadow-sm" />
+                <div key={item.interactionId} className="bg-[#E9E9E9] dark:bg-[#333333] rounded-2xl p-5 border border-[#E9E9E9] dark:border-[#333333] flex flex-col gap-4 relative overflow-hidden group hover:border-[#D4AF37]/50 transition-colors">
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-[#FF4B4B]/10 blur-2xl rounded-full translate-x-1/2 -translate-y-1/2 pointer-events-none" />
+                  <div className="flex gap-4 items-start relative z-10">
+                      <PlaceImage place={item.place} className="w-24 h-24 rounded-xl object-cover shadow-lg border border-[#E9E9E9] dark:border-[#333333]" />
                     <div className="flex-1">
-                      <h4 className="font-bold text-lg dark:text-white line-clamp-1">{item.place.name}</h4>
-                      <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-2">{item.place.location.city}, {item.place.location.country}</p>
+                      <h4 className="font-bold text-lg text-[#111111] dark:text-[#F0F0F0] line-clamp-1">{item.place.name}</h4>
+                      <p className="text-xs text-[#E60023] uppercase tracking-wider mb-2 font-bold">{item.place.location.city}, {item.place.location.country}</p>
                       <button 
                         onClick={() => setSelectedPlace(item.place)} 
-                        className="text-sm text-trek-green hover:text-trek-dark font-bold flex items-center gap-1 transition-colors"
+                        className="text-xs text-[#111111] dark:text-[#F0F0F0] hover:text-[#E60023] font-bold flex items-center gap-1 transition-colors uppercase tracking-widest mt-4"
                       >
-                        Go to Place Details <ChevronRight className="w-4 h-4" />
+                        Inspect Dossier <ChevronRight className="w-4 h-4 text-[#E60023]" />
                       </button>
                     </div>
                   </div>
                   
-                  <div className="bg-zinc-50 dark:bg-zinc-900/50 rounded-xl p-4 space-y-4 border border-zinc-100 dark:border-zinc-800">
+                  <div className="bg-white dark:bg-[#111111] rounded-xl p-4 space-y-4 border border-[#FFFFFF05] relative z-10">
                     <div>
-                      <label className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-2 block">Your Rating</label>
+                      <label className="text-[10px] font-bold text-[#767676] dark:text-[#A0A0A0] uppercase tracking-widest mb-2 block">Agent Rating</label>
                       <div className="flex gap-1">
                         {[1, 2, 3, 4, 5].map(star => (
                           <Star 
                             key={star} 
                             onClick={() => handleInteractionUpdate(item.interactionId, 'rating', star)}
-                            className={`w-6 h-6 cursor-pointer transition-colors ${
+                            className={`w-5 h-5 cursor-pointer transition-colors ${
                               item.rating >= star 
-                                ? 'fill-yellow-400 text-yellow-400' 
-                                : 'text-zinc-300 dark:text-zinc-600 hover:text-yellow-200'
+                                ? 'fill-[#D4AF37] text-[#E60023]' 
+                                : 'text-zinc-600 hover:text-[#E60023]/50'
                             }`} 
                           />
                         ))}
                       </div>
                     </div>
                     <div>
-                      <label className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-2 block">Personal Notes</label>
+                      <label className="text-[10px] font-bold text-[#767676] dark:text-[#A0A0A0] uppercase tracking-widest mb-2 block">Field Notes</label>
                       <textarea
                         value={item.notes}
                         onChange={(e) => {
@@ -447,8 +496,8 @@ export default function Profile() {
                           ));
                         }}
                         onBlur={(e) => handleInteractionUpdate(item.interactionId, 'notes', e.target.value)}
-                        className="w-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-trek-green/50 dark:text-white resize-none"
-                        placeholder="Add your personal notes, memories, or tips here..."
+                        className="w-full bg-[#E9E9E9] dark:bg-[#333333] border border-[#E9E9E9] dark:border-[#333333] rounded-xl p-3 text-sm focus:outline-none focus:border-[#D4AF37]/30 text-[#111111] dark:text-[#F0F0F0] resize-none"
+                        placeholder="Log classified findings..."
                         rows={3}
                       />
                     </div>
@@ -457,10 +506,9 @@ export default function Profile() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-12 bg-white/30 dark:bg-zinc-900/30 rounded-2xl border border-dashed border-zinc-300 dark:border-zinc-700">
-              <Heart className="w-12 h-12 text-zinc-300 dark:text-zinc-600 mx-auto mb-4" />
-              <p className="text-zinc-500 dark:text-zinc-400 font-medium">You haven't liked any places yet.</p>
-              <p className="text-sm text-zinc-400 dark:text-zinc-500 mt-1">Explore and heart your favorite destinations!</p>
+            <div className="text-center py-12 bg-[#E9E9E9] dark:bg-[#333333] rounded-3xl border lg border-[#FFFFFF05] border-dashed">
+              <Heart className="w-12 h-12 text-zinc-600 mx-auto mb-4" />
+              <p className="text-[#111111] dark:text-[#F0F0F0] font-medium tracking-wide">No targets secured yet.</p>
             </div>
           )}
         </motion.div>

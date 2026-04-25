@@ -57,7 +57,7 @@ export default function Search() {
           <SearchIcon className="w-12 h-12 text-white" />
         </div>
         <h2 className="text-4xl font-display font-black mb-4 dark:text-white">Search Places</h2>
-        <p className="text-zinc-500 dark:text-zinc-400 text-lg leading-relaxed mb-8">
+        <p className="text-[#767676] dark:text-zinc-400 text-lg leading-relaxed mb-8">
           Sign in to search for destinations and get personalized results.
         </p>
         <LoginButton />
@@ -68,56 +68,62 @@ export default function Search() {
   return (
     <div className="space-y-12">
       <div className="max-w-3xl mx-auto text-center space-y-6 relative z-10">
-        <h2 className="text-5xl font-display font-bold text-zinc-900 dark:text-white tracking-tight">
-          Where to <span className="text-gradient">next?</span>
+        <h2 className="text-5xl font-display font-black text-[#E60023] tracking-tight">
+          Where to <span className="text-[#E60023]">next?</span>
         </h2>
-        <p className="text-zinc-500 dark:text-zinc-400 text-lg">
+        <p className="text-slate-600 font-medium text-lg">
           Search for destinations, activities, or vibes. Our AI understands what you're looking for.
         </p>
         
-        <form onSubmit={handleSearch} className="relative group">
-          <div className="absolute inset-y-0 left-6 flex items-center pointer-events-none">
-            <SearchIcon className="w-6 h-6 text-zinc-400 dark:text-zinc-500 group-focus-within:text-trek-green transition-colors" />
+        <form onSubmit={handleSearch} className="relative group max-w-xl mx-auto mt-8">
+          <div className="relative">
+            <div className="absolute inset-0 bg-[#E60023]/10 blur-md rounded-full scale-y-75 transition-all pointer-events-none" />
+            <div className="relative flex items-center bg-white dark:bg-[#111111] border border-[#E9E9E9] dark:border-[#333333] border-4 rounded-full p-1 pl-4 pr-1 focus-within:border-[#E60023] shadow-lg transition-all overflow-hidden bg-clip-padding">
+              
+              <SearchIcon className="w-6 h-6 text-[#E60023] mr-2 shrink-0" />
+              
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Where do you want to go?"
+                className="w-full h-14 bg-[#f0f0f0] dark:bg-[#1f1f1f] text-[#111111] dark:text-[#F0F0F0] placeholder-slate-500 text-lg font-bold focus:outline-none tracking-wide z-10"
+              />
+              
+              <button
+                type="submit"
+                disabled={loading}
+                className="ml-2 px-8 py-4 bg-[#E60023] text-white rounded-full font-bold text-lg hover:bg-[#E60023] transition-all focus:ring-4 focus:ring-[#E60023]/30 disabled:opacity-50 flex items-center gap-2 z-10"
+              >
+                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Search'}
+              </button>
+            </div>
           </div>
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="e.g. 'quiet beaches in France' or 'adventure sports in Japan'"
-            className="w-full h-20 pl-16 pr-32 glass rounded-[2.5rem] text-xl focus:outline-none focus:ring-4 focus:ring-trek-green/20 transition-all shadow-xl shadow-zinc-100 dark:shadow-none dark:text-white"
-          />
-          <button
-            type="submit"
-            disabled={loading}
-            className="absolute right-4 top-4 bottom-4 px-8 bg-gradient-primary text-white rounded-[1.5rem] font-bold hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center gap-2 shadow-lg shadow-trek-green/25"
-          >
-            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Search'}
-          </button>
         </form>
 
         <div className="flex items-center justify-center gap-4 mt-6">
           <button 
             onClick={() => setShowFilters(!showFilters)}
-            className={`flex items-center gap-2 px-6 py-3 rounded-full font-medium transition-all ${showFilters ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900' : 'glass text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'}`}
+            className={`flex items-center gap-2 px-6 py-3 rounded-full font-medium transition-all ${showFilters ? 'bg-[#111111] text-white dark:bg-white dark:bg-[#111111] dark:text-zinc-900' : 'bg-white dark:bg-[#111111] text-[#767676] dark:text-[#A0A0A0] border border-[#E9E9E9] dark:border-[#333333] dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-[#E9E9E9] dark:bg-[#333333]'}`}
           >
             <SlidersHorizontal className="w-4 h-4" />
             Filters {(category !== 'All' || budget !== 'All') && <span className="w-2 h-2 rounded-full bg-trek-green" />}
           </button>
           
-          <div className="glass flex items-center p-1 rounded-full">
+          <div className="bg-[#F0F0F0] border border-[#E9E9E9] dark:border-[#333333] flex items-center p-1 rounded-full shadow-[0_0_20px_rgba(0,0,0,0.5)]">
             <button
               onClick={() => setViewMode('list')}
-              className={`flex items-center gap-2 px-6 py-2 rounded-full font-medium transition-all ${viewMode === 'list' ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white'}`}
+              className={`flex items-center gap-2 px-6 py-2 rounded-full font-medium transition-all ${viewMode === 'list' ? 'bg-white dark:bg-[#111111] text-[#111111] dark:text-[#F0F0F0] shadow-sm' : 'text-[#767676] dark:text-[#A0A0A0] hover:text-[#111111] dark:text-[#F0F0F0]'}`}
             >
               <List className="w-4 h-4" />
-              List
+              Grid
             </button>
             <button
               onClick={() => setViewMode('map')}
-              className={`flex items-center gap-2 px-6 py-2 rounded-full font-medium transition-all ${viewMode === 'map' ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white'}`}
+              className={`flex items-center gap-2 px-6 py-2 rounded-full font-medium transition-all ${viewMode === 'map' ? 'bg-white dark:bg-[#111111] text-[#111111] dark:text-[#F0F0F0] shadow-sm' : 'text-[#767676] dark:text-[#A0A0A0] hover:text-[#111111] dark:text-[#F0F0F0]'}`}
             >
               <MapIcon className="w-4 h-4" />
-              Map
+              Intel Map
             </button>
           </div>
         </div>
@@ -130,15 +136,15 @@ export default function Search() {
               exit={{ opacity: 0, height: 0 }}
               className="overflow-hidden"
             >
-              <div className="glass p-6 rounded-[2rem] mt-4 grid grid-cols-1 md:grid-cols-2 gap-8 text-left">
+              <div className="bg-[#161B22]/50 backdrop-blur-xl border border-[#FFFFFF15] p-6 rounded-[2rem] mt-4 grid grid-cols-1 md:grid-cols-2 gap-8 text-left">
                 <div>
-                  <h4 className="text-sm font-bold text-zinc-900 dark:text-white uppercase tracking-wider mb-3">Category</h4>
+                  <h4 className="text-sm font-bold text-[#E2E8F0] uppercase tracking-wider mb-3">Category</h4>
                   <div className="flex flex-wrap gap-2">
                     {CATEGORIES.map(c => (
                       <button
                         key={c}
                         onClick={() => { setCategory(c); handleSearch(); }}
-                        className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${category === c ? 'bg-trek-green text-white shadow-md shadow-trek-green/20' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700'}`}
+                        className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${category === c ? 'bg-white dark:bg-[#111111] text-[#111111] dark:text-[#F0F0F0] shadow-sm' : 'bg-[#F0F0F0] border border-[#FFFFFF15] text-[#E2E8F0] hover:border-[#D4AF37]/50'}`}
                       >
                         {c}
                       </button>
@@ -146,13 +152,13 @@ export default function Search() {
                   </div>
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold text-zinc-900 dark:text-white uppercase tracking-wider mb-3">Budget</h4>
+                  <h4 className="text-sm font-bold text-[#E2E8F0] uppercase tracking-wider mb-3">Budget</h4>
                   <div className="flex flex-wrap gap-2">
                     {BUDGETS.map(b => (
                       <button
                         key={b}
                         onClick={() => { setBudget(b); handleSearch(); }}
-                        className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${budget === b ? 'bg-teal-500 text-white shadow-md shadow-teal-500/20' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700'}`}
+                        className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${budget === b ? 'bg-[#FF4B4B] text-white shadow-[0_0_15px_rgba(255,75,75,0.3)]' : 'bg-[#F0F0F0] border border-[#FFFFFF15] text-[#E2E8F0] hover:border-[#FF4B4B]/50'}`}
                       >
                         {b}
                       </button>
@@ -167,11 +173,11 @@ export default function Search() {
 
       {results.length > 0 && (
         <div className="space-y-8">
-          <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-6">
-            <h3 className="text-2xl font-display font-bold dark:text-white">
-              {query ? `Results for "${query}"` : 'Recommended Places'}
+          <div className="flex items-center justify-between border-b border-[#FFFFFF15] pb-6">
+            <h3 className="text-2xl font-display font-bold text-[#E60023]">
+              {query ? `Intel for "${query}"` : 'Recommended Targets'}
             </h3>
-            <span className="text-zinc-500 dark:text-zinc-400 font-medium">{results.length} places found</span>
+            <span className="text-[#767676] dark:text-[#A0A0A0] font-medium tracking-widest uppercase text-xs">{results.length} identified</span>
           </div>
           
           {viewMode === 'list' ? (

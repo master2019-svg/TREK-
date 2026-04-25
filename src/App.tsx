@@ -10,30 +10,18 @@ import Search from './components/Search';
 import Roadmap from './components/Roadmap';
 import Profile from './components/Profile';
 import Friends from './components/Friends';
+import Messages from './components/Messages';
+import Notifications from './components/Notifications';
+import AIIsland from './components/AIIsland';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plane } from 'lucide-react';
+import { Plane, Globe } from 'lucide-react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from './firebase';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('discover');
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  const [showIntro, setShowIntro] = useState(true);
   const [user] = useAuthState(auth);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setShowIntro(false), 2500);
-    return () => clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [isDarkMode]);
 
   const renderContent = () => {
     switch (activeTab) {
@@ -45,6 +33,10 @@ export default function App() {
         return <Roadmap />;
       case 'friends':
         return <Friends />;
+      case 'messages':
+        return <Messages />;
+      case 'notifications':
+        return <Notifications />;
       case 'profile':
         return <Profile />;
       default:
@@ -54,53 +46,26 @@ export default function App() {
 
   return (
     <ErrorBoundary>
-      <AnimatePresence>
-        {showIntro && (
-          <motion.div
-            initial={{ opacity: 1 }}
-            exit={{ opacity: 0, filter: "blur(10px)" }}
-            transition={{ duration: 0.8, ease: "easeInOut" }}
-            className="fixed inset-0 z-[9999] flex items-center justify-center bg-white dark:bg-zinc-950"
-          >
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 1, ease: "easeOut" }}
-              className="flex flex-col items-center gap-6"
-            >
-              <div className="w-24 h-24 bg-gradient-primary rounded-3xl flex items-center justify-center shadow-2xl shadow-trek-green/30">
-                <Plane className="text-white w-12 h-12 -rotate-45" />
-              </div>
-              <h1 className="text-5xl font-display font-black tracking-tight text-gradient">TREK</h1>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <div className="flex flex-col md:flex-row min-h-screen transition-colors duration-500 relative overflow-hidden bg-grid-pattern">
+      <div className="flex flex-col md:flex-row min-h-screen transition-colors duration-500 relative overflow-hidden bg-white dark:bg-[#111111] text-[#111111] dark:text-[#F0F0F0]">
         
-        {/* Advanced Animated Background Blobs */}
-        <div className="fixed inset-0 z-[-1] overflow-hidden pointer-events-none transition-colors duration-500">
-          <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-trek-green/10 dark:bg-trek-green/5 blur-[120px] animate-blob" />
-          <div className="absolute top-[20%] right-[-10%] w-[40vw] h-[40vw] rounded-full bg-teal-500/10 dark:bg-teal-600/5 blur-[120px] animate-blob animation-delay-2000" />
-          <div className="absolute bottom-[-20%] left-[20%] w-[60vw] h-[60vw] rounded-full bg-emerald-500/10 dark:bg-emerald-600/5 blur-[120px] animate-blob animation-delay-4000" />
-          <div className="absolute top-[40%] left-[40%] w-[30vw] h-[30vw] rounded-full bg-cyan-400/10 dark:bg-cyan-600/5 blur-[100px] animate-blob" style={{ animationDelay: '6s' }} />
+        {/* Simple crisp background */}
+        <div className="fixed inset-0 z-[-1] overflow-hidden pointer-events-none bg-white dark:bg-[#111111]">
         </div>
 
         <Sidebar 
           activeTab={activeTab} 
-          setActiveTab={setActiveTab} 
-          isDarkMode={isDarkMode}
-          setIsDarkMode={setIsDarkMode}
+          setActiveTab={setActiveTab}
         />
         
         <main className="flex-1 w-full md:ml-72 p-6 pb-28 md:p-12 md:pb-12 z-10 relative">
           
+          <AIIsland />
+
           {/* Desktop Global Header */}
           {user && (
-            <div className="hidden md:flex absolute top-6 right-8 lg:right-12 z-50 items-center gap-3 glass px-5 py-2.5 rounded-full shadow-lg">
-              <span className="text-sm font-bold dark:text-white">{user.displayName || user.email?.split('@')[0]}</span>
-              <div className="w-9 h-9 rounded-full border-2 border-white dark:border-zinc-800 shadow-sm bg-trek-green/10 flex items-center justify-center text-trek-green font-bold overflow-hidden shrink-0">
+            <div className="hidden md:flex absolute top-6 right-8 lg:right-12 z-50 items-center gap-3 bg-white dark:bg-[#111111] border border-[#E9E9E9] dark:border-[#333333] px-5 py-2.5 rounded-full shadow-sm">
+              <span className="text-sm font-bold text-[#111111] dark:text-[#F0F0F0]">{user.displayName || user.email?.split('@')[0]}</span>
+              <div className="w-9 h-9 rounded-full border border-[#E9E9E9] dark:border-[#333333] bg-[#E9E9E9] dark:bg-[#333333] flex items-center justify-center text-[#111111] dark:text-[#F0F0F0] font-bold overflow-hidden shrink-0">
                 {user.photoURL ? (
                   <img
                     src={user.photoURL}

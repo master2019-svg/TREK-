@@ -68,7 +68,7 @@ export default function Discover() {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
         <Loader2 className="w-10 h-10 text-trek-green animate-spin" />
-        <p className="text-zinc-500 dark:text-zinc-400 font-medium">Curating your personalized travel guide...</p>
+        <p className="text-[#767676] dark:text-zinc-400 font-medium">Curating your personalized travel guide...</p>
       </div>
     );
   }
@@ -82,7 +82,7 @@ export default function Discover() {
         <h2 className="text-4xl font-display font-black mb-4 dark:text-white">
           Sign in to <span className="text-trek-green">Discover</span>
         </h2>
-        <p className="text-zinc-500 dark:text-zinc-400 text-lg leading-relaxed mb-8">
+        <p className="text-[#767676] dark:text-zinc-400 text-lg leading-relaxed mb-8">
           Log in to unlock personalized travel recommendations based on your preferences and travel style.
         </p>
         <LoginButton />
@@ -100,29 +100,29 @@ export default function Discover() {
               <button 
                 onClick={handleRefresh}
                 disabled={refreshing}
-                className="p-2 ml-2 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition"
+                className="p-2 ml-2 rounded-full bg-zinc-100 dark:bg-[#E9E9E9] dark:bg-[#333333] text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition"
               >
                 <RefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
               </button>
             </h2>
-            <p className="text-zinc-500 dark:text-zinc-400">Handpicked destinations based on your unique travel profile.</p>
+            <p className="text-[#767676] dark:text-zinc-400">Handpicked destinations based on your unique travel profile.</p>
           </div>
         </div>
         
-        <div className="glass flex items-center p-1 rounded-full self-start md:self-auto">
+        <div className="bg-[#F0F0F0] border border-[#E9E9E9] dark:border-[#333333] flex items-center p-1 rounded-full self-start md:self-auto shadow-lg shadow-black/20">
           <button
             onClick={() => setViewMode('list')}
-            className={`flex items-center gap-2 px-6 py-2 rounded-full font-medium transition-all ${viewMode === 'list' ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-md' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white'}`}
+            className={`flex items-center gap-2 px-6 py-2 rounded-full font-medium transition-all ${viewMode === 'list' ? 'bg-white dark:bg-[#111111] text-[#111111] dark:text-[#F0F0F0] shadow-sm' : 'text-zinc-400 hover:text-[#E2E8F0]'}`}
           >
             <List className="w-4 h-4" />
-            List
+            Grid
           </button>
           <button
             onClick={() => setViewMode('map')}
-            className={`flex items-center gap-2 px-6 py-2 rounded-full font-medium transition-all ${viewMode === 'map' ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-md' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white'}`}
+            className={`flex items-center gap-2 px-6 py-2 rounded-full font-medium transition-all ${viewMode === 'map' ? 'bg-white dark:bg-[#111111] text-[#111111] dark:text-[#F0F0F0] shadow-sm' : 'text-zinc-400 hover:text-[#E2E8F0]'}`}
           >
             <MapIcon className="w-4 h-4" />
-            Map
+            Intel Map
           </button>
         </div>
       </div>
@@ -167,7 +167,7 @@ export default function Discover() {
       ) : (
         <div className="h-[70vh] w-full relative">
           {refreshing && (
-             <div className="absolute inset-0 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm z-10 flex justify-center items-center rounded-3xl">
+             <div className="absolute inset-0 bg-white dark:bg-[#111111]/50 dark:bg-[#111111]/50 backdrop-blur-sm z-10 flex justify-center items-center rounded-3xl">
                 <Loader2 className="w-10 h-10 text-trek-green animate-spin" />
              </div>
           )}

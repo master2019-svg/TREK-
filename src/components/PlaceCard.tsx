@@ -64,76 +64,75 @@ export default function PlaceCard({ place, isLiked: initialLiked = false, isSave
       layout
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="glass-card rounded-[2rem] overflow-hidden card-hover group h-full flex flex-col relative"
+      className="bg-white dark:bg-[#111111] border border-[#E9E9E9] dark:border-[#333333] rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-shadow duration-300 group h-full flex flex-col relative"
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-trek-green/5 via-teal-500/5 to-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-br from-[#003B95]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
       
-      <div className="relative h-64 overflow-hidden">
+      <div className="relative h-56 overflow-hidden">
         <PlaceImage
           place={place}
-          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80" />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/50 via-transparent to-transparent" />
         
         <div className="absolute top-4 right-4 flex flex-col gap-2">
           <motion.button
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.8 }}
             onClick={(e) => { e.stopPropagation(); toggleInteraction('like'); }}
-            className={`p-3 rounded-2xl backdrop-blur-md transition-all duration-300 ${
-              isLiked ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/30' : 'bg-white/20 text-white hover:bg-white/40'
+            className={`p-2.5 rounded-full backdrop-blur-md transition-all duration-300 shadow-sm ${
+              isLiked ? 'bg-[#E60023] text-white shadow-md' : 'bg-white dark:bg-[#111111]/80 text-[#111111] dark:text-[#F0F0F0] hover:bg-white dark:bg-[#111111]'
             }`}
           >
-            <Heart className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`} />
+            <Heart className={`w-4 h-4 ${isLiked ? 'fill-current' : ''}`} />
           </motion.button>
           <motion.button
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.8 }}
             onClick={(e) => { e.stopPropagation(); toggleInteraction('save'); }}
-            className={`p-3 rounded-2xl backdrop-blur-md transition-all duration-300 ${
-              isSaved ? 'bg-trek-green text-white shadow-lg shadow-trek-green/30' : 'bg-white/20 text-white hover:bg-white/40'
+            className={`p-2.5 rounded-full backdrop-blur-md transition-all duration-300 shadow-sm ${
+              isSaved ? 'bg-[#E60023] text-white shadow-md' : 'bg-white dark:bg-[#111111]/80 text-[#111111] dark:text-[#F0F0F0] hover:bg-white dark:bg-[#111111]'
             }`}
           >
-            <Bookmark className={`w-5 h-5 ${isSaved ? 'fill-current' : ''}`} />
+            <Bookmark className={`w-4 h-4 ${isSaved ? 'fill-current' : ''}`} />
           </motion.button>
         </div>
         
         <div className="absolute bottom-4 left-4 right-4 flex justify-between items-end">
-          <div className={`px-3 py-1.5 rounded-xl text-xs font-bold backdrop-blur-md border ${getCategoryColor(place.category || '')}`}>
+          <div className="px-3 py-1 bg-white dark:bg-[#111111] text-[#E60023] rounded-full text-xs font-bold shadow-sm">
             {place.category || 'Destination'}
           </div>
-          <div className="bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-xl flex items-center gap-1.5 shadow-sm text-white">
-            <Star className="w-4 h-4 text-yellow-400 fill-current" />
-            <span className="text-sm font-bold">{place.average_rating || '4.5'}</span>
+          <div className="bg-[#E60023] px-2.5 py-1.5 rounded-lg flex items-center justify-center shadow-[0_2px_8px_rgba(0,59,149,0.3)] min-w-[36px]">
+            <span className="text-sm font-bold text-white leading-none">{place.average_rating || '8.5'}</span>
           </div>
         </div>
       </div>
 
-      <div className="p-6 flex-1 flex flex-col relative z-10">
-        <div className="flex items-start justify-between mb-2">
-          <h3 className="text-xl font-display font-bold text-zinc-900 dark:text-white leading-tight group-hover:text-trek-green dark:group-hover:text-trek-green transition-colors">
+      <div className="p-5 flex-1 flex flex-col relative z-10">
+        <div className="flex items-start justify-between mb-1">
+          <h3 className="text-lg font-bold text-[#111111] dark:text-[#F0F0F0] leading-tight group-hover:text-[#111111] dark:text-[#F0F0F0] transition-colors">
             {place.name}
           </h3>
         </div>
         
-        <div className="flex items-center gap-1.5 text-zinc-500 dark:text-zinc-400 text-sm mb-4 font-medium">
-          <MapPin className="w-4 h-4 text-trek-green" />
+        <div className="flex items-center gap-1 text-[#111111] dark:text-[#F0F0F0] text-xs mb-3 font-bold underline text-[#111111] dark:text-[#F0F0F0] underline-offset-4">
+          <MapPin className="w-3.5 h-3.5" />
           <span>{place.location.city}, {place.location.country}</span>
         </div>
 
-        <p className="text-zinc-600 dark:text-zinc-300 text-sm line-clamp-2 mb-6 leading-relaxed flex-1">
+        <p className="text-[#767676] dark:text-[#A0A0A0] text-sm line-clamp-2 leading-relaxed flex-1">
           {place.description}
         </p>
 
-        <div className="mt-auto flex flex-wrap gap-2 pt-4 border-t border-zinc-100 dark:border-zinc-800/50">
+        <div className="mt-4 pt-4 border-t border-[#E9E9E9] dark:border-[#333333] flex flex-wrap gap-2">
           {place.tags?.slice(0, 3).map((tag) => (
-            <span key={tag} className="px-3 py-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 text-[10px] font-bold uppercase tracking-wider rounded-lg">
-              #{tag}
+            <span key={tag} className="px-2.5 py-1 bg-[#f0f0f0] dark:bg-[#1f1f1f] text-[#767676] dark:text-[#A0A0A0] border border-[#E9E9E9] dark:border-[#333333] text-[10px] font-bold uppercase tracking-wide rounded-md">
+              {tag}
             </span>
           ))}
           {place.accessibility?.length > 0 && (
-            <div className="flex items-center gap-1 px-3 py-1 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold uppercase tracking-wider rounded-lg">
-              <Accessibility className="w-3 h-3" />
+            <div className="flex items-center gap-1 px-2.5 py-1 bg-[#f0f0f0] dark:bg-[#1f1f1f] text-[#767676] dark:text-[#A0A0A0] text-[10px] font-bold uppercase tracking-wide rounded-md">
+              <Accessibility className="w-3 h-3 border-[#E9E9E9] dark:border-[#333333] border rounded-sm p-0.5" />
               <span>Accessible</span>
             </div>
           )}

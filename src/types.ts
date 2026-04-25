@@ -32,6 +32,13 @@ export interface TravelPreference {
   accessibility_needs: string[];
   budget: 'low' | 'medium' | 'high' | 'luxury';
   group_type: string;
+  categories: string[];
+  tags: string[];
+  notification_preferences?: {
+    followers: boolean;
+    messages: boolean;
+    recommendations: boolean;
+  };
   updatedAt: any;
 }
 

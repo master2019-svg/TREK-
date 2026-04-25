@@ -104,58 +104,63 @@ export default function Roadmap() {
 
   return (
     <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 h-auto xl:h-[calc(100vh-12rem)]">
-      <div className="xl:col-span-2 rounded-[2.5rem] overflow-hidden shadow-2xl border-8 border-white dark:border-zinc-900 relative h-[50vh] xl:h-auto">
-        <MapContainer center={positions[0] || [0, 0]} zoom={4} className="h-full w-full z-0">
+      <div className="xl:col-span-2 rounded-[2.5rem] overflow-hidden shadow-2xl border border-[#FFFFFF15] relative h-[50vh] xl:h-auto">
+        <MapContainer center={positions[0] || [0, 0]} zoom={4} className="h-full w-full z-0 font-sans" style={{ filter: 'grayscale(0.5) contrast(1.2)' }}>
           <TileLayer
-            url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+            url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+            attribution='&copy; <a href="https://carto.com/attributions">CARTO</a>'
           />
           {roadmap.data.map((item, idx) => {
             const { lat, lng } = getCoords(item.place);
             if (isNaN(lat) || isNaN(lng)) return null;
             return (
             <Marker key={item.place.place_id} position={[lat, lng]}>
-              <Popup>
-                <div className="p-2">
-                  <h4 className="font-bold text-zinc-900">{item.place.name}</h4>
-                  <p className="text-xs text-zinc-500">{item.place.category}</p>
+              <Popup className="cinematic-popup">
+                <div className="bg-[#161B22] p-3 text-center border border-[#FFFFFF15] rounded-xl">
+                  <h4 className="font-bold text-[#E2E8F0] tracking-tight">{item.place.name}</h4>
+                  <p className="text-xs text-[#D4AF37] mt-1 font-medium tracking-wide uppercase">{item.place.category}</p>
                 </div>
               </Popup>
             </Marker>
             );
           })}
-          <Polyline positions={positions} color="#18181b" weight={3} dashArray="10, 10" />
+          <Polyline positions={positions} color="#D4AF37" weight={4} dashArray="8, 12" className="animate-pulse" />
         </MapContainer>
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0D1117] via-transparent pointer-events-none" />
+        
         <div className="absolute top-6 left-6 z-10">
-          <div className="glass px-6 py-3 rounded-2xl flex items-center gap-3 shadow-lg">
-            <Navigation className="w-5 h-5 text-zinc-900 dark:text-white" />
-            <span className="font-bold text-sm uppercase tracking-wider dark:text-white">Optimized Route</span>
+          <div className="bg-[#161B22]/80 backdrop-blur-xl px-6 py-3 rounded-2xl flex items-center gap-3 shadow-lg border border-[#FFFFFF15]">
+            <Navigation className="w-5 h-5 text-[#D4AF37]" />
+            <span className="font-bold text-sm uppercase tracking-wider text-[#E2E8F0]">Quest Route</span>
           </div>
         </div>
       </div>
 
-      <div className="overflow-y-auto pr-4 space-y-6 custom-scrollbar pb-12 xl:pb-0">
-        <div className="flex items-center justify-between mb-8">
-          <h3 className="text-2xl font-display font-bold dark:text-white">Itinerary</h3>
+      <div className="overflow-y-auto pr-4 space-y-6 custom-scrollbar pb-12 xl:pb-0 relative">
+        {/* Timeline Path Line */}
+        <div className="absolute left-6 top-24 bottom-0 w-px bg-gradient-to-b from-[#D4AF37] to-transparent pointer-events-none" />
+
+        <div className="flex items-center justify-between mb-8 pl-4">
+          <h3 className="text-3xl font-display font-bold text-[#E2E8F0]">Active Log</h3>
           <div className="flex items-center gap-4">
             <button 
               onClick={handleRefresh}
               disabled={refreshing}
-              className="p-2 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition flex items-center gap-2 custom-bounce"
+              className="p-2 rounded-xl bg-[#161B22] border border-[#FFFFFF15] text-[#D4AF37] hover:bg-[#D4AF37]/10 transition flex items-center gap-2"
             >
               <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
             </button>
-            <div className="flex items-center gap-2 text-zinc-500 dark:text-zinc-400 text-sm">
+            <div className="flex items-center gap-2 text-zinc-500 font-bold text-sm uppercase tracking-wider">
               <Calendar className="w-4 h-4" />
-              <span>{roadmap.data.length} Stops</span>
+              <span>{roadmap.data.length} Missions</span>
             </div>
           </div>
         </div>
 
-        <div className="space-y-4 relative">
+        <div className="space-y-6 relative ml-6">
           {refreshing && (
-             <div className="absolute inset-0 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm z-10 flex justify-center py-10 rounded-3xl">
-                <Loader2 className="w-8 h-8 text-trek-green animate-spin" />
+             <div className="absolute inset-0 bg-[#0D1117]/50 backdrop-blur-md z-10 flex justify-center py-10 rounded-3xl">
+                <Loader2 className="w-8 h-8 text-[#D4AF37] animate-spin" />
              </div>
           )}
           {roadmap.data.map((item, idx) => (
@@ -164,29 +169,34 @@ export default function Roadmap() {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: idx * 0.1 }}
-              className="glass p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 relative group hover:border-zinc-300 dark:hover:border-zinc-600 transition-colors"
+              className="bg-[#161B22] p-6 rounded-3xl border border-[#FFFFFF15] relative group hover:border-[#D4AF37]/50 hover:shadow-[0_0_30px_rgba(212,175,55,0.1)] transition-all ml-6"
             >
-              <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-[10px] font-bold flex items-center justify-center rounded-full shadow-lg">
+              <div className="absolute -left-12 top-1/2 -translate-y-1/2 w-12 h-12 bg-[#0D1117] border-2 border-[#D4AF37] text-[#D4AF37] font-bold flex items-center justify-center rounded-full shadow-[0_0_15px_rgba(212,175,55,0.3)] shrink-0 z-10">
                 {idx + 1}
               </div>
               
-              <div className="flex items-start justify-between mb-4">
+              <div className="flex items-start justify-between mb-2">
                 <div>
-                  <h4 className="font-bold text-zinc-900 dark:text-white group-hover:text-zinc-700 dark:group-hover:text-zinc-300 transition-colors">{item.place.name}</h4>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium uppercase tracking-tighter mt-1">
-                    {item.place.location.city}, {item.place.location.country}
-                  </p>
+                  <h4 className="font-bold text-[#E2E8F0] text-xl tracking-tight">{item.place.name}</h4>
+                  <div className="flex items-center gap-3 mt-2">
+                    <span className="px-3 py-1 rounded-full bg-[#D4AF37]/10 text-[#D4AF37] text-xs font-bold uppercase tracking-wider">
+                      {item.place.category}
+                    </span>
+                    <p className="text-xs text-zinc-500 font-medium uppercase tracking-wider">
+                      {item.place.location.city}, {item.place.location.country}
+                    </p>
+                  </div>
                 </div>
               </div>
 
               {item.next_destination && (
-                <div className="mt-4 pt-4 border-t border-zinc-50 dark:border-zinc-800/50 flex items-center gap-3 text-zinc-400 dark:text-zinc-500">
-                  <div className="w-1.5 h-1.5 bg-zinc-200 dark:bg-zinc-700 rounded-full" />
-                  <div className="flex-1 h-px bg-zinc-100 dark:bg-zinc-800" />
-                  <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
-                    Next stop
-                    <ChevronRight className="w-3 h-3" />
-                    <span className="text-zinc-600 dark:text-zinc-300">{item.next_destination}</span>
+                <div className="mt-6 pt-4 border-t border-[#FFFFFF15] flex items-center gap-3 text-zinc-500">
+                  <div className="w-1.5 h-1.5 bg-[#D4AF37] rounded-full animate-pulse" />
+                  <div className="flex-1 h-px bg-[#FFFFFF15]" />
+                  <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+                    Next Mission
+                    <ChevronRight className="w-4 h-4 text-[#FF4B4B]" />
+                    <span className="text-[#E2E8F0] tracking-wider">{item.next_destination}</span>
                   </div>
                 </div>
               )}

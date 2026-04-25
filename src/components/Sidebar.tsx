@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { auth, googleProvider, signInWithPopup, signOut, db } from '../firebase';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { Compass, Search, Map, User as UserIcon, LogIn, LogOut, Plane, Loader2, Moon, Sun, Users } from 'lucide-react';
+import { Compass, Search, Map, User as UserIcon, LogIn, LogOut, Plane, Loader2, Users, Bell, MessageCircle, Globe, Moon, Sun } from 'lucide-react';
 import { motion } from 'motion/react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -14,19 +14,42 @@ function cn(...inputs: ClassValue[]) {
 interface SidebarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
-  isDarkMode: boolean;
-  setIsDarkMode: (isDark: boolean) => void;
 }
 
-export default function Sidebar({ activeTab, setActiveTab, isDarkMode, setIsDarkMode }: SidebarProps) {
+export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
   const [user] = useAuthState(auth);
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      setIsDark(true);
+      document.documentElement.classList.add('dark');
+    } else {
+      setIsDark(false);
+      document.documentElement.classList.remove('dark');
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    if (isDark) {
+      document.documentElement.classList.remove('dark');
+      localStorage.theme = 'light';
+      setIsDark(false);
+    } else {
+      document.documentElement.classList.add('dark');
+      localStorage.theme = 'dark';
+      setIsDark(true);
+    }
+  };
 
   const menuItems = [
     { id: 'discover', label: 'Discover', icon: Compass },
-    { id: 'search', label: 'Search', icon: Search },
-    { id: 'roadmap', label: 'My Roadmap', icon: Map },
-    { id: 'friends', label: 'Friends', icon: Users },
-    { id: 'profile', label: 'Travel Profile', icon: UserIcon },
+    { id: 'search', label: 'Intel', icon: Search },
+    { id: 'roadmap', label: 'Roadmap', icon: Map },
+    { id: 'friends', label: 'Squad', icon: Users },
+    { id: 'messages', label: 'Chat', icon: MessageCircle },
+    { id: 'notifications', label: 'Alerts', icon: Bell },
+    { id: 'profile', label: 'Profile', icon: UserIcon },
   ];
 
   const [isLoggingIn, setIsLoggingIn] = React.useState(false);
@@ -84,55 +107,46 @@ export default function Sidebar({ activeTab, setActiveTab, isDarkMode, setIsDark
   return (
     <>
       {/* Mobile Top Header */}
-      <div className="md:hidden sticky top-0 left-0 right-0 z-50 glass border-b border-zinc-200 dark:border-zinc-800 p-4 flex items-center justify-between">
+      <div className="md:hidden sticky top-0 left-0 right-0 z-50 bg-white dark:bg-[#111111] border-b border-[#E9E9E9] dark:border-[#333333] p-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-primary rounded-xl flex items-center justify-center shadow-lg shadow-trek-green/20">
-            <Plane className="text-white w-6 h-6 -rotate-45" />
+          <div className="w-10 h-10 bg-[#E60023] rounded-full flex items-center justify-center shadow-lg">
+            <Globe className="text-white w-6 h-6" />
           </div>
-          <h1 className="text-2xl font-display font-black tracking-tight text-gradient">TREK</h1>
+          <h1 className="text-2xl font-display font-black tracking-tight text-[#E60023]">TREK</h1>
         </div>
-        {user && (
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-bold truncate dark:text-white max-w-[100px]">{user.displayName}</span>
-            <div className="w-10 h-10 rounded-full border-2 border-white dark:border-zinc-800 shadow-sm bg-trek-green/10 flex items-center justify-center text-trek-green font-bold overflow-hidden">
-              {user.photoURL ? (
-                <img
-                  src={user.photoURL}
-                  alt={user.displayName || ''}
-                  className="w-full h-full object-cover"
-                  referrerPolicy="no-referrer"
-                />
-              ) : (
-                user.displayName?.charAt(0).toUpperCase() || 'U'
-              )}
+        
+        <div className="flex items-center gap-4">
+          <button onClick={toggleTheme} className="text-[#111111] dark:text-[#F0F0F0]">
+            {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+          </button>
+          {user && (
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full border border-[#E9E9E9] dark:border-[#333333] shadow-sm bg-[#E9E9E9] dark:bg-[#333333] flex items-center justify-center text-[#111111] dark:text-[#F0F0F0] font-bold overflow-hidden">
+                {user.photoURL ? (
+                  <img
+                    src={user.photoURL}
+                    alt={user.displayName || ''}
+                    className="w-full h-full object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  user.displayName?.charAt(0).toUpperCase() || 'U'
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Desktop Sidebar */}
-      <div className="hidden md:flex w-72 h-screen glass border-r border-zinc-200 dark:border-zinc-800 flex-col p-6 fixed left-0 top-0 z-50 transition-colors duration-500">
+      <div className="hidden md:flex w-72 h-screen bg-white dark:bg-[#111111] flex-col p-6 fixed left-0 top-0 z-50 transition-colors duration-500 border-r border-[#E9E9E9] dark:border-[#333333]">
         <div className="flex items-center justify-between mb-12 px-2">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-primary rounded-xl flex items-center justify-center shadow-lg shadow-trek-green/20">
-              <Plane className="text-white w-6 h-6 -rotate-45" />
+            <div className="w-10 h-10 bg-[#E60023] rounded-full flex items-center justify-center shadow-sm">
+              <Globe className="text-white w-6 h-6" />
             </div>
-            <h1 className="text-2xl font-display font-black tracking-tight text-gradient">TREK</h1>
+            <h1 className="text-2xl font-display font-black tracking-widest text-[#E60023] uppercase">TREK</h1>
           </div>
-          <motion.button 
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={() => setIsDarkMode(!isDarkMode)}
-            className="p-2 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-zinc-500 dark:text-zinc-400"
-          >
-            <motion.div
-              initial={false}
-              animate={{ rotate: isDarkMode ? 180 : 0 }}
-              transition={{ duration: 0.4, ease: "easeInOut" }}
-            >
-              {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-            </motion.div>
-          </motion.button>
         </div>
 
         <nav className="flex-1 space-y-2 relative">
@@ -141,32 +155,45 @@ export default function Sidebar({ activeTab, setActiveTab, isDarkMode, setIsDark
               key={item.id}
               onClick={() => setActiveTab(item.id)}
               className={cn(
-                "w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-200 group relative z-10",
+                "w-full flex items-center gap-4 px-4 py-3.5 rounded-full transition-all duration-200 group relative z-10",
                 activeTab === item.id
-                  ? "text-white"
-                  : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
+                  ? "text-[#111111] dark:text-[#F0F0F0] font-bold"
+                  : "text-[#111111] dark:text-[#F0F0F0]/70 hover:bg-[#E9E9E9] dark:bg-[#333333]/50 font-bold"
               )}
             >
               {activeTab === item.id && (
                 <motion.div
                   layoutId="active-nav-desktop"
-                  className="absolute inset-0 bg-gradient-primary rounded-2xl shadow-lg shadow-trek-green/20 z-[-1]"
+                  className="absolute inset-0 bg-[#E9E9E9] dark:bg-[#333333] rounded-full z-[-1]"
                   transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                 />
               )}
               <item.icon className={cn(
-                "w-5 h-5 transition-colors",
-                activeTab === item.id ? "text-white" : "text-zinc-400 dark:text-zinc-500 group-hover:text-zinc-900 dark:group-hover:text-white"
+                "w-5 h-5 transition-transform duration-300",
+                activeTab === item.id ? "scale-110" : "group-hover:scale-110"
               )} />
               <span className="font-bold">{item.label}</span>
             </button>
           ))}
         </nav>
 
-        <div className="mt-auto pt-6 border-t border-zinc-100 dark:border-zinc-800">
+        <div className="mt-auto pt-6 border-t border-[#E9E9E9] dark:border-[#333333] space-y-4">
+          <button 
+            onClick={toggleTheme} 
+            className="w-full flex items-center justify-between px-4 py-3 bg-[#f0f0f0] dark:bg-[#333333] rounded-xl text-[#111111] dark:text-[#F0F0F0] font-bold transition-colors"
+          >
+            <span className="flex items-center gap-3">
+              {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              {isDark ? 'Light Mode' : 'Dark Mode'}
+            </span>
+            <div className={`w-10 h-6 rounded-full relative transition-colors ${isDark ? 'bg-[#E60023]' : 'bg-[#111111]/20'}`}>
+              <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${isDark ? 'left-5' : 'left-1'}`} />
+            </div>
+          </button>
+
           {user ? (
             <div className="flex items-center gap-4 px-2">
-              <div className="w-10 h-10 rounded-full border-2 border-white dark:border-zinc-800 shadow-sm bg-trek-green/10 flex items-center justify-center text-trek-green font-bold overflow-hidden shrink-0">
+              <div className="w-10 h-10 rounded-full border border-[#E9E9E9] dark:border-[#333333] bg-white dark:bg-[#111111] flex items-center justify-center text-[#111111] dark:text-[#F0F0F0] font-bold overflow-hidden shrink-0 shadow-sm">
                 {user.photoURL ? (
                   <img
                     src={user.photoURL}
@@ -179,10 +206,10 @@ export default function Sidebar({ activeTab, setActiveTab, isDarkMode, setIsDark
                 )}
               </div>
               <div className="flex-1 min-w-0 text-left">
-                <p className="text-sm font-bold truncate dark:text-white">{user.displayName}</p>
+                <p className="text-sm font-bold truncate text-[#111111] dark:text-[#F0F0F0]">{user.displayName}</p>
                 <button
                   onClick={handleLogout}
-                  className="text-xs text-zinc-500 dark:text-zinc-400 hover:text-red-500 dark:hover:text-red-400 flex items-center gap-1 mt-0.5 font-medium transition-colors"
+                  className="text-xs text-[#111111] dark:text-[#F0F0F0]/50 hover:text-[#111111] dark:text-[#F0F0F0] flex items-center gap-1 mt-0.5 font-semibold transition-colors"
                 >
                   <LogOut className="w-3 h-3" />
                   Sign Out
@@ -195,7 +222,7 @@ export default function Sidebar({ activeTab, setActiveTab, isDarkMode, setIsDark
               whileTap={{ scale: 0.98 }}
               onClick={handleLogin}
               disabled={isLoggingIn}
-              className="w-full py-4 bg-gradient-primary text-white rounded-2xl font-bold flex items-center justify-center gap-3 hover:opacity-90 transition-opacity shadow-lg shadow-cyan-500/20 disabled:opacity-70 disabled:cursor-not-allowed"
+              className="w-full py-4 bg-[#E60023] text-white rounded-full font-bold flex items-center justify-center gap-3 hover:bg-[#cc0020] transition-colors shadow-sm disabled:opacity-50"
             >
               {isLoggingIn ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
@@ -209,7 +236,7 @@ export default function Sidebar({ activeTab, setActiveTab, isDarkMode, setIsDark
       </div>
 
       {/* Mobile Bottom Navigation */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 glass border-t border-zinc-200 dark:border-zinc-800 z-50 pb-safe">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-[#111111] border-t border-[#E9E9E9] dark:border-[#333333] z-50 pb-safe">
         <div className="flex items-center justify-around p-3 relative">
           {menuItems.map((item) => (
             <button
@@ -218,40 +245,24 @@ export default function Sidebar({ activeTab, setActiveTab, isDarkMode, setIsDark
               className={cn(
                 "flex flex-col items-center gap-1 p-2 rounded-xl transition-all duration-200 relative z-10",
                 activeTab === item.id
-                  ? "text-trek-green"
-                  : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-white"
+                  ? "text-[#E60023]"
+                  : "text-[#111111] dark:text-[#F0F0F0]/50 hover:text-[#111111] dark:text-[#F0F0F0]"
               )}
             >
               {activeTab === item.id && (
                 <motion.div
                   layoutId="active-nav-mobile"
-                  className="absolute inset-0 bg-trek-green/10 dark:bg-trek-green/20 rounded-xl z-[-1]"
+                  className="absolute inset-0 bg-[#E60023]/10 rounded-xl z-[-1]"
                   transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                 />
               )}
               <item.icon className={cn(
                 "w-6 h-6 transition-colors",
-                activeTab === item.id ? "text-trek-green drop-shadow-md" : ""
+                activeTab === item.id ? "text-[#E60023]" : ""
               )} />
-              <span className="text-[10px] font-bold">{item.label}</span>
+              <span className="text-[10px] font-bold tracking-widest uppercase">{item.label}</span>
             </button>
           ))}
-          
-          {/* Mobile Dark Mode Toggle */}
-          <motion.button
-            whileTap={{ scale: 0.9 }}
-            onClick={() => setIsDarkMode(!isDarkMode)}
-            className="flex flex-col items-center gap-1 p-2 rounded-xl transition-all duration-200 text-zinc-400 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-white"
-          >
-            <motion.div
-              initial={false}
-              animate={{ rotate: isDarkMode ? 180 : 0 }}
-              transition={{ duration: 0.4, ease: "easeInOut" }}
-            >
-              {isDarkMode ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
-            </motion.div>
-            <span className="text-[10px] font-bold">Theme</span>
-          </motion.button>
         </div>
       </div>
     </>
