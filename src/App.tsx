@@ -26,7 +26,7 @@ export default function App() {
   const renderContent = () => {
     switch (activeTab) {
       case 'discover':
-        return <Discover />;
+        return <Discover setActiveTab={setActiveTab} />;
       case 'search':
         return <Search />;
       case 'roadmap':
@@ -34,13 +34,13 @@ export default function App() {
       case 'friends':
         return <Friends />;
       case 'messages':
-        return <Messages />;
+        return <Messages setActiveTab={setActiveTab} />;
       case 'notifications':
-        return <Notifications />;
+        return <Notifications setActiveTab={setActiveTab} />;
       case 'profile':
         return <Profile />;
       default:
-        return <Discover />;
+        return <Discover setActiveTab={setActiveTab} />;
     }
   };
 

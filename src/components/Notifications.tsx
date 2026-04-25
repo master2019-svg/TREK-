@@ -1,7 +1,11 @@
 import React from 'react';
 import { Heart, UserPlus, MapPin, Award } from 'lucide-react';
 
-export default function Notifications() {
+interface NotificationsProps {
+  setActiveTab: (tab: string) => void;
+}
+
+export default function Notifications({ setActiveTab }: NotificationsProps) {
   const notifications = [
     {
       id: 1,
@@ -11,7 +15,8 @@ export default function Notifications() {
       action: 'liked your intel log on',
       target: 'The Roman Theatre',
       time: '2h',
-      read: false
+      read: false,
+      tab: 'discover'
     },
     {
       id: 2,
@@ -21,7 +26,8 @@ export default function Notifications() {
       action: 'joined your squad',
       target: '',
       time: '4h',
-      read: false
+      read: false,
+      tab: 'friends'
     },
     {
       id: 3,
@@ -31,7 +37,8 @@ export default function Notifications() {
       action: 'unlocked badge:',
       target: 'Night Owl Explorer',
       time: '1d',
-      read: true
+      read: true,
+      tab: 'profile'
     },
     {
       id: 4,
@@ -41,14 +48,15 @@ export default function Notifications() {
       action: 'mentioned you in a log at',
       target: 'Pyramids of Giza',
       time: '2d',
-      read: true
+      read: true,
+      tab: 'discover'
     }
   ];
 
   const getIcon = (type: string) => {
     switch (type) {
-      case 'like': return <Heart className="w-4 h-4 text-[#FF4B4B] fill-current" />;
-      case 'follow': return <UserPlus className="w-4 h-4 text-[#0fb5e8]" />;
+      case 'like': return <Heart className="w-4 h-4 text-[#E60023] fill-current" />;
+      case 'follow': return <UserPlus className="w-4 h-4 text-[#E60023]" />;
       case 'achievement': return <Award className="w-4 h-4 text-[#E60023]" />;
       case 'mention': return <MapPin className="w-4 h-4 text-emerald-500" />;
       default: return null;
@@ -64,11 +72,12 @@ export default function Notifications() {
         </span>
       </div>
 
-      <div className="bg-[#161B22]/80 backdrop-blur-3xl border border-[#FFFFFF15] rounded-[2rem] overflow-hidden">
+      <div className="bg-[#F0F0F0] dark:bg-[#1f1f1f] border border-[#E9E9E9] dark:border-[#333333] rounded-[2rem] overflow-hidden">
         {notifications.map((notif, idx) => (
           <div 
             key={notif.id} 
-            className={`p-6 flex items-start gap-4 transition-colors cursor-pointer border-b border-[#FFFFFF05] last:border-0 ${notif.read ? 'hover:bg-[#161B22]' : 'bg-[#D4AF37]/5 hover:bg-[#D4AF37]/10'}`}
+            onClick={() => setActiveTab(notif.tab)}
+            className={`p-6 flex items-start gap-4 transition-colors cursor-pointer border-b border-[#E9E9E9] dark:border-[#333333] last:border-0 ${notif.read ? 'hover:bg-[#E9E9E9] dark:hover:bg-[#333333]' : 'bg-[#E60023]/10 hover:bg-[#E60023]/20'}`}
           >
             <div className="relative">
               {notif.avatar === 'system' ? (

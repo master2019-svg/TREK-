@@ -1,19 +1,24 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { Place } from '../types';
 import PlaceCard from './PlaceCard';
 import PlacesMap from './PlacesMap';
 import PlaceDetailsModal from './PlaceDetailsModal';
 import { auth } from '../firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { motion } from 'motion/react';
-import { Loader2, Sparkles, Map as MapIcon, List, Compass, RefreshCw } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Loader2, Sparkles, Map as MapIcon, List, Compass, RefreshCw, ChevronDown } from 'lucide-react';
 import LoginButton from './LoginButton';
 
-export default function Discover() {
+interface DiscoverProps {
+  setActiveTab?: (tab: string) => void;
+}
+
+export default function Discover({ setActiveTab }: DiscoverProps) {
   const [user] = useAuthState(auth);
   const [places, setPlaces] = useState<Place[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
   const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
   const [userInteractions, setUserInteractions] = useState<{liked: Set<string>, saved: Set<string>}>({
@@ -21,12 +26,17 @@ export default function Discover() {
     saved: new Set()
   });
 
-  const fetchData = useCallback(async () => {
+  const [pullY, setPullY] = useState(0);
+  const touchStartY = useRef(0);
+  const observerTarget = useRef(null);
+
+  const fetchData = useCallback(async (isLoadMore = false) => {
     if (!user) {
       setLoading(false);
       setRefreshing(false);
       return;
     }
+    if (isLoadMore) setLoadingMore(true);
     try {
       // First fetch interactions
       const interactionsRes = await fetch(`/api/interactions/${user.uid}`);
@@ -45,13 +55,20 @@ export default function Discover() {
       const recommendationsRes = await fetch(`/api/recommendations/${user.uid}`);
       const recommendationsResult = await recommendationsRes.json();
       if (recommendationsResult.data) {
-        setPlaces(recommendationsResult.data.map((item: any) => item.place));
+        const newPlaces = recommendationsResult.data.map((item: any) => item.place);
+        if (isLoadMore) {
+          setPlaces(prev => [...prev, ...newPlaces]);
+        } else {
+          setPlaces(newPlaces);
+        }
       }
     } catch (error) {
       console.error('Failed to fetch user data for Discover:', error);
     } finally {
-      setLoading(false);
+      if (!isLoadMore) setLoading(false);
       setRefreshing(false);
+      setLoadingMore(false);
+      setPullY(0);
     }
   }, [user]);
 
@@ -59,9 +76,41 @@ export default function Discover() {
     fetchData();
   }, [fetchData]);
 
-  const handleRefresh = () => {
-    setRefreshing(true);
-    fetchData();
+  // Infinite Scroll Observer
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting && !loading && !loadingMore && !refreshing && places.length > 0) {
+          fetchData(true);
+        }
+      },
+      { threshold: 1.0 }
+    );
+    if (observerTarget.current) observer.observe(observerTarget.current);
+    return () => {
+      if (observerTarget.current) observer.unobserve(observerTarget.current);
+    };
+  }, [observerTarget, loading, loadingMore, refreshing, places, fetchData]);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (window.scrollY === 0) touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (touchStartY.current > 0 && window.scrollY === 0) {
+      const y = e.touches[0].clientY - touchStartY.current;
+      if (y > 0 && y < 150) setPullY(y);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (pullY > 80) {
+      setRefreshing(true);
+      fetchData();
+    } else {
+      setPullY(0);
+    }
+    touchStartY.current = 0;
   };
 
   if (loading) {
@@ -91,19 +140,26 @@ export default function Discover() {
   }
 
   return (
-    <div className="space-y-8">
+    <div 
+      className="space-y-8 relative"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
+      <div 
+        className="absolute top-[-80px] left-0 right-0 flex justify-center items-center h-20 transition-transform duration-200"
+        style={{ transform: `translateY(${refreshing ? 80 : Math.min(pullY, 80)}px)` }}
+      >
+        <div className="bg-white dark:bg-[#111111] border border-[#E9E9E9] dark:border-[#333333] shadow-lg rounded-full p-3 flex items-center justify-center">
+          <RefreshCw className={`w-5 h-5 text-[#E60023] ${refreshing ? 'animate-spin' : ''}`} style={{ transform: `rotate(${pullY * 2}deg)` }} />
+        </div>
+      </div>
+
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div className="flex items-center gap-4">
           <div>
             <h2 className="text-4xl font-display font-bold text-zinc-900 dark:text-white mb-2 flex items-center gap-3">
               Discover <span className="text-gradient">Places</span>
-              <button 
-                onClick={handleRefresh}
-                disabled={refreshing}
-                className="p-2 ml-2 rounded-full bg-zinc-100 dark:bg-[#E9E9E9] dark:bg-[#333333] text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition"
-              >
-                <RefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
-              </button>
             </h2>
             <p className="text-[#767676] dark:text-zinc-400">Handpicked destinations based on your unique travel profile.</p>
           </div>
@@ -163,6 +219,12 @@ export default function Discover() {
               </div>
             </motion.div>
           ))}
+          {loadingMore && (
+            <div className="col-span-1 md:col-span-2 lg:col-span-3 flex justify-center py-6">
+              <Loader2 className="w-8 h-8 text-[#E60023] animate-spin" />
+            </div>
+          )}
+          <div ref={observerTarget} className="h-10 w-full col-span-1 md:col-span-2 lg:col-span-3" />
         </motion.div>
       ) : (
         <div className="h-[70vh] w-full relative">

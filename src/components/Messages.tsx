@@ -14,11 +14,30 @@ interface Message {
   createdAt: any;
 }
 
-export default function Messages() {
+interface MessagesProps {
+  setActiveTab: (tab: string) => void;
+}
+
+export default function Messages({ setActiveTab }: MessagesProps) {
   const [user] = useAuthState(auth);
   const [messageText, setMessageText] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
-  const dummyChatId = "global_channel";
+  const [activeChat, setActiveChat] = useState('global');
+  const [chats, setChats] = useState([
+    { id: 'global', name: 'Global Board', desc: 'Join the conversation', avatar: 'GB', unread: true },
+  ]);
+
+  const handleNewChat = () => {
+    const newId = 'chat_' + Date.now();
+    setChats([{
+      id: newId,
+      name: 'New Conversation',
+      desc: 'Start chatting...',
+      avatar: 'NC',
+      unread: false,
+    }, ...chats]);
+    setActiveChat(newId);
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -53,32 +72,43 @@ export default function Messages() {
       {/* Sidebar List */}
       <div className="w-full md:w-96 border-r border-slate-200 dark:border-[#333333] hidden md:flex flex-col bg-slate-50 dark:bg-[#1f1f1f]">
         <div className="p-6 border-b border-slate-200 dark:border-[#333333]">
-          <h2 className="text-2xl font-black text-[#E60023] mb-4">Comms Hub</h2>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-2xl font-black text-[#E60023]">Comms Hub</h2>
+            <button onClick={handleNewChat} className="text-sm font-bold bg-[#E60023] text-white px-3 py-1.5 rounded-full hover:bg-[cc0020] transition-colors">
+              + New Chat
+            </button>
+          </div>
           <div className="relative">
             <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-[#767676]" />
             <input 
               type="text" 
               placeholder="Search conversations..."
-              className="w-full bg-white dark:bg-[#111111] border border-slate-200 dark:border-[#333333] text-slate-900 dark:text-[#F0F0F0] rounded-xl py-2 pl-9 pr-4 text-sm focus:outline-none focus:border-[#006CE4]"
+              className="w-full bg-white dark:bg-[#111111] border border-slate-200 dark:border-[#333333] text-slate-900 dark:text-[#F0F0F0] rounded-xl py-2 pl-9 pr-4 text-sm focus:outline-none focus:border-[#E60023]"
             />
           </div>
         </div>
 
         <div className="flex-1 overflow-y-auto no-scrollbar">
-          <div className="p-4 flex items-center gap-4 cursor-pointer transition-colors border-b border-slate-200 dark:border-[#333333] bg-white dark:bg-[#111111] border-l-4 border-l-[#006CE4]">
-            <div className="w-12 h-12 rounded-full bg-[#E60023] text-white flex items-center justify-center font-bold">
-              GB
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex justify-between items-center mb-1">
-                <h4 className="text-sm tracking-wide font-bold text-slate-900 dark:text-[#F0F0F0]">Global Board</h4>
+          {chats.map(chat => (
+            <div 
+              key={chat.id}
+              onClick={() => setActiveChat(chat.id)}
+              className={`p-4 flex items-center gap-4 cursor-pointer transition-colors border-b border-slate-200 dark:border-[#333333] ${activeChat === chat.id ? 'bg-white dark:bg-[#111111] border-l-4 border-l-[#E60023]' : 'hover:bg-white/50 dark:hover:bg-[#111111]/50 border-l-4 border-l-transparent'}`}
+            >
+              <div className="w-12 h-12 rounded-full bg-[#E60023] text-white flex items-center justify-center font-bold">
+                {chat.avatar}
               </div>
-              <p className="text-xs truncate font-bold text-[#006CE4]">
-                Join the conversation
-              </p>
+              <div className="flex-1 min-w-0">
+                <div className="flex justify-between items-center mb-1">
+                  <h4 className="text-sm tracking-wide font-bold text-slate-900 dark:text-[#F0F0F0]">{chat.name}</h4>
+                </div>
+                <p className={`text-xs truncate font-bold ${chat.unread ? 'text-[#E60023]' : 'text-slate-500'}`}>
+                  {chat.desc}
+                </p>
+              </div>
+              {chat.unread && <div className="w-2.5 h-2.5 rounded-full bg-[#E60023]" />}
             </div>
-            <div className="w-2.5 h-2.5 rounded-full bg-[#FEBB02]" />
-          </div>
+          ))}
         </div>
       </div>
 
@@ -95,18 +125,22 @@ export default function Messages() {
             <div className="p-6 border-b border-slate-200 dark:border-[#333333] bg-white dark:bg-[#111111] flex justify-between items-center">
               <div className="flex items-center gap-3">
                 <div className="relative">
-                  <div className="w-10 h-10 rounded-full bg-[#E60023] flex items-center justify-center text-white font-bold">GB</div>
+                  <div className="w-10 h-10 rounded-full bg-[#E60023] flex items-center justify-center text-white font-bold">
+                    {chats.find(c => c.id === activeChat)?.avatar || 'U'}
+                  </div>
                   <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full"></div>
                 </div>
                 <div>
-                  <h3 className="font-bold text-slate-900 dark:text-[#F0F0F0] tracking-wide">Global Board</h3>
+                  <h3 className="font-bold text-slate-900 dark:text-[#F0F0F0] tracking-wide">
+                    {chats.find(c => c.id === activeChat)?.name || 'Chat'}
+                  </h3>
                   <p className="text-xs text-emerald-600 font-medium">Online</p>
                 </div>
               </div>
               <div className="flex items-center gap-4 text-slate-400 dark:text-[#767676]">
-                <button className="hover:text-[#006CE4] transition-colors"><Phone className="w-5 h-5" /></button>
-                <button className="hover:text-[#006CE4] transition-colors"><Video className="w-5 h-5" /></button>
-                <button className="hover:text-[#006CE4] transition-colors"><Info className="w-5 h-5" /></button>
+                <button className="hover:text-[#E60023] transition-colors"><Phone className="w-5 h-5" /></button>
+                <button className="hover:text-[#E60023] transition-colors"><Video className="w-5 h-5" /></button>
+                <button className="hover:text-[#E60023] transition-colors"><Info className="w-5 h-5" /></button>
               </div>
             </div>
 
