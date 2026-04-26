@@ -277,14 +277,14 @@ export default function PlaceDetailsModal({ place, isOpen, onClose }: PlaceDetai
                            } catch(e) {}
                         }
                       }}
-                      className="bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/20 text-white px-4 py-2 rounded-xl font-bold text-sm shadow-lg transition-colors flex items-center justify-center gap-2"
+                      className="bg-black/40 hover:bg-black/60 backdrop-blur-md border border-white/20 text-white px-4 py-2 rounded-xl font-bold text-sm shadow-lg transition-colors flex items-center justify-center gap-2"
                     >
                       <Heart className="w-4 h-4" />
                       Like
                     </button>
                     <button
                       onClick={handleShare}
-                      className="bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/20 text-white px-4 py-2 rounded-xl font-bold text-sm shadow-lg transition-colors flex items-center justify-center gap-2"
+                      className="bg-black/40 hover:bg-black/60 backdrop-blur-md border border-white/20 text-white px-4 py-2 rounded-xl font-bold text-sm shadow-lg transition-colors flex items-center justify-center gap-2"
                     >
                       {copied ? (
                         <>

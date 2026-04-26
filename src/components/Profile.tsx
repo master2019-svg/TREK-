@@ -439,22 +439,22 @@ export default function Profile() {
         </motion.div>
 
         {/* Liked Places Section */}
-        <motion.div variants={itemVariants} className="bg-white dark:bg-[#111111] border border-[#E9E9E9] dark:border-[#333333] p-8 rounded-[2rem] space-y-6 md:col-span-3 border-t-2 border-t-[#E60023]">
+        <motion.div variants={itemVariants} className="bg-white dark:bg-[#111111] border border-[#E9E9E9] dark:border-[#333333] p-8 rounded-[2rem] space-y-6 md:col-span-3">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 rounded-xl bg-[#E9E9E9] dark:bg-[#333333] border border-[#E9E9E9] dark:border-[#333333] flex items-center justify-center">
               <Heart className="w-5 h-5 text-[#E60023]" />
             </div>
             <div>
-              <h3 className="text-xl font-display font-bold text-[#111111] dark:text-[#F0F0F0]">Secured Targets</h3>
-              <p className="text-sm text-[#767676] dark:text-[#A0A0A0]">Locations archived for deployment.</p>
+              <h3 className="text-xl font-display font-bold text-[#111111] dark:text-[#F0F0F0]">Saved Places</h3>
+              <p className="text-sm text-[#767676] dark:text-[#A0A0A0]">Locations you want to visit.</p>
             </div>
           </div>
           
           {likedPlaces.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
               {likedPlaces.map((item) => (
-                <div key={item.interactionId} className="bg-[#E9E9E9] dark:bg-[#333333] rounded-2xl p-5 border border-[#E9E9E9] dark:border-[#333333] flex flex-col gap-4 relative overflow-hidden group hover:border-[#D4AF37]/50 transition-colors">
-                  <div className="absolute top-0 right-0 w-24 h-24 bg-[#FF4B4B]/10 blur-2xl rounded-full translate-x-1/2 -translate-y-1/2 pointer-events-none" />
+                <div key={item.interactionId} className="bg-[#E9E9E9] dark:bg-[#333333] rounded-2xl p-5 border border-[#E9E9E9] dark:border-[#333333] flex flex-col gap-4 relative overflow-hidden group hover:border-[#E60023]/50 transition-colors">
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-[#E60023]/10 blur-2xl rounded-full translate-x-1/2 -translate-y-1/2 pointer-events-none" />
                   <div className="flex gap-4 items-start relative z-10">
                       <PlaceImage place={item.place} className="w-24 h-24 rounded-xl object-cover shadow-lg border border-[#E9E9E9] dark:border-[#333333]" />
                     <div className="flex-1">
@@ -464,14 +464,14 @@ export default function Profile() {
                         onClick={() => setSelectedPlace(item.place)} 
                         className="text-xs text-[#111111] dark:text-[#F0F0F0] hover:text-[#E60023] font-bold flex items-center gap-1 transition-colors uppercase tracking-widest mt-4"
                       >
-                        Inspect Dossier <ChevronRight className="w-4 h-4 text-[#E60023]" />
+                        View Details <ChevronRight className="w-4 h-4 text-[#E60023]" />
                       </button>
                     </div>
                   </div>
                   
-                  <div className="bg-white dark:bg-[#111111] rounded-xl p-4 space-y-4 border border-[#FFFFFF05] relative z-10">
+                  <div className="bg-white dark:bg-[#111111] rounded-xl p-4 space-y-4 border border-[#E9E9E9] dark:border-[#333333] relative z-10">
                     <div>
-                      <label className="text-[10px] font-bold text-[#767676] dark:text-[#A0A0A0] uppercase tracking-widest mb-2 block">Agent Rating</label>
+                      <label className="text-[10px] font-bold text-[#767676] dark:text-[#A0A0A0] uppercase tracking-widest mb-2 block">Your Rating</label>
                       <div className="flex gap-1">
                         {[1, 2, 3, 4, 5].map(star => (
                           <Star 
@@ -479,15 +479,15 @@ export default function Profile() {
                             onClick={() => handleInteractionUpdate(item.interactionId, 'rating', star)}
                             className={`w-5 h-5 cursor-pointer transition-colors ${
                               item.rating >= star 
-                                ? 'fill-[#D4AF37] text-[#E60023]' 
-                                : 'text-zinc-600 hover:text-[#E60023]/50'
+                                ? 'fill-[#E60023] text-[#E60023]' 
+                                : 'text-zinc-400 hover:text-[#E60023]/50'
                             }`} 
                           />
                         ))}
                       </div>
                     </div>
                     <div>
-                      <label className="text-[10px] font-bold text-[#767676] dark:text-[#A0A0A0] uppercase tracking-widest mb-2 block">Field Notes</label>
+                      <label className="text-[10px] font-bold text-[#767676] dark:text-[#A0A0A0] uppercase tracking-widest mb-2 block">Notes</label>
                       <textarea
                         value={item.notes}
                         onChange={(e) => {
@@ -496,8 +496,8 @@ export default function Profile() {
                           ));
                         }}
                         onBlur={(e) => handleInteractionUpdate(item.interactionId, 'notes', e.target.value)}
-                        className="w-full bg-[#E9E9E9] dark:bg-[#333333] border border-[#E9E9E9] dark:border-[#333333] rounded-xl p-3 text-sm focus:outline-none focus:border-[#D4AF37]/30 text-[#111111] dark:text-[#F0F0F0] resize-none"
-                        placeholder="Log classified findings..."
+                        className="w-full bg-[#E9E9E9] dark:bg-[#333333] border border-[#E9E9E9] dark:border-[#333333] rounded-xl p-3 text-sm focus:outline-none focus:border-[#E60023]/50 text-[#111111] dark:text-[#F0F0F0] resize-none"
+                        placeholder="Add your thoughts or travel plans..."
                         rows={3}
                       />
                     </div>
@@ -506,9 +506,9 @@ export default function Profile() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-12 bg-[#E9E9E9] dark:bg-[#333333] rounded-3xl border lg border-[#FFFFFF05] border-dashed">
-              <Heart className="w-12 h-12 text-zinc-600 mx-auto mb-4" />
-              <p className="text-[#111111] dark:text-[#F0F0F0] font-medium tracking-wide">No targets secured yet.</p>
+            <div className="text-center py-12 bg-[#E9E9E9] dark:bg-[#333333] rounded-3xl border lg border-[#E9E9E9] dark:border-[#333333] border-dashed">
+              <Heart className="w-12 h-12 text-zinc-400 mx-auto mb-4" />
+              <p className="text-[#111111] dark:text-[#F0F0F0] font-medium tracking-wide">No places saved yet.</p>
             </div>
           )}
         </motion.div>

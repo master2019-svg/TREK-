@@ -40,7 +40,7 @@ function ChangeView({ center, zoom }: { center: [number, number], zoom: number }
   return null;
 }
 
-export default function PlacesMap({ places, center, zoom = 3 }: PlacesMapProps) {
+export default React.memo(function PlacesMap({ places, center, zoom = 3 }: PlacesMapProps) {
   const [showFilters, setShowFilters] = useState(false);
   const [activeCategory, setActiveCategory] = useState('All');
   const [activeBudget, setActiveBudget] = useState('All');
@@ -181,10 +181,49 @@ export default function PlacesMap({ places, center, zoom = 3 }: PlacesMapProps) 
         {filteredPlaces.map((place) => {
           const { lat, lng } = getCoords(place);
           if (isNaN(lat) || isNaN(lng)) return null;
+
+          const category = (place.category || '').toLowerCase();
+          const tags = place.tags?.map(t => t.toLowerCase()) || [];
+          
+          let color = '#E60023'; // Default Trek red
+          let svgPath = '<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle>';
+          
+          if (category.includes('beach') || tags.includes('beach')) { 
+            color = '#0ea5e9'; 
+            svgPath = '<path d="M22 12c-4-4-10-4-14 0M2 12c4-4 10-4 14 0" /><path d="M12 2v20" />'; 
+          } else if (category.includes('mountain') || tags.includes('mountain')) { 
+            color = '#22c55e'; 
+            svgPath = '<path d="m8 3 4 8 5-5 5 15H2L8 3z"/>'; 
+          } else if (category.includes('city') || tags.includes('urban') || tags.includes('city')) { 
+            color = '#8b5cf6'; 
+            svgPath = '<rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><path d="M9 22v-4h6v4"></path><path d="M8 6h.01"></path><path d="M16 6h.01"></path><path d="M12 6h.01"></path><path d="M12 10h.01"></path><path d="M12 14h.01"></path><path d="M16 10h.01"></path><path d="M16 14h.01"></path><path d="M8 10h.01"></path><path d="M8 14h.01"></path>'; 
+          } else if (category.includes('historic') || tags.includes('historic') || tags.includes('temple')) { 
+            color = '#d97706'; 
+            svgPath = '<path d="M2 22h20"/><path d="M6 18v-8"/><path d="M10 18v-8"/><path d="M14 18v-8"/><path d="M18 18v-8"/><path d="M3 10V6l9-4 9 4v4H3z"/>'; // Building/Temple
+          } else if (category.includes('nature') || tags.includes('nature') || category.includes('park') || tags.includes('park')) { 
+            color = '#10b981'; 
+            svgPath = '<path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>'; 
+          }
+
+          const customIcon = L.divIcon({
+            className: 'bg-transparent border-0',
+            html: `
+              <div style="background-color: ${color}; width: 32px; height: 32px; border-radius: 50%; border: 3px solid white; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); display: flex; align-items: center; justify-content: center; position: relative;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${svgPath}</svg>
+                <div style="position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 6px solid white;"></div>
+                <div style="position: absolute; bottom: -2px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid ${color};"></div>
+              </div>
+            `,
+            iconSize: [32, 38],
+            iconAnchor: [16, 38],
+            popupAnchor: [0, -38]
+          });
+
           return (
           <Marker 
             key={place.place_id} 
             position={[lat, lng]}
+            icon={customIcon}
           >
             <Popup className="rounded-2xl overflow-hidden p-0 custom-popup">
               <motion.div 
@@ -219,4 +258,4 @@ export default function PlacesMap({ places, center, zoom = 3 }: PlacesMapProps) 
       </MapContainer>
     </div>
   );
-}
+});

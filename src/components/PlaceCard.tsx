@@ -12,7 +12,7 @@ interface PlaceCardProps {
   isSaved?: boolean;
 }
 
-export default function PlaceCard({ place, isLiked: initialLiked = false, isSaved: initialSaved = false }: PlaceCardProps) {
+export default React.memo(function PlaceCard({ place, isLiked: initialLiked = false, isSaved: initialSaved = false }: PlaceCardProps) {
   const [isLiked, setIsLiked] = useState(initialLiked);
   const [isSaved, setIsSaved] = useState(initialSaved);
 
@@ -140,4 +140,4 @@ export default function PlaceCard({ place, isLiked: initialLiked = false, isSave
       </div>
     </motion.div>
   );
-}
+});
