@@ -123,7 +123,7 @@ export default function Search() {
               className={`flex items-center gap-2 px-6 py-2 rounded-full font-medium transition-all ${viewMode === 'map' ? 'bg-white dark:bg-[#111111] text-[#111111] dark:text-[#F0F0F0] shadow-sm' : 'text-[#767676] dark:text-[#A0A0A0] hover:text-[#111111] dark:text-[#F0F0F0]'}`}
             >
               <MapIcon className="w-4 h-4" />
-              Intel Map
+              Map View
             </button>
           </div>
         </div>
@@ -175,7 +175,7 @@ export default function Search() {
         <div className="space-y-8">
           <div className="flex items-center justify-between border-b border-[#FFFFFF15] pb-6">
             <h3 className="text-2xl font-display font-bold text-[#E60023]">
-              {query ? `Intel for "${query}"` : 'Recommended Targets'}
+              {query ? `Results for "${query}"` : 'Recommended Targets'}
             </h3>
             <span className="text-[#767676] dark:text-[#A0A0A0] font-medium tracking-widest uppercase text-xs">{results.length} identified</span>
           </div>

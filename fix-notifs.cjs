@@ -1,15 +1,15 @@
-import React, { useState, useEffect } from 'react';
+const fs = require('fs');
+
+let content = fs.readFileSync('src/components/Notifications.tsx', 'utf8');
+
+const importReplacement = `import React, { useState, useEffect } from 'react';
 import { Heart, UserPlus, MapPin, Award } from 'lucide-react';
 import { collection, query, where, orderBy, onSnapshot, updateDoc, doc } from 'firebase/firestore';
 import { auth, db } from '../firebase';
-import { useAuthState } from 'react-firebase-hooks/auth';
+import { useAuthState } from 'react-firebase-hooks/auth';`;
+content = content.replace(/import React from 'react';\nimport { Heart, UserPlus, MapPin, Award } from 'lucide-react';/, importReplacement);
 
-interface NotificationsProps {
-  setActiveTab: (tab: string) => void;
-}
-
-export default function Notifications({ setActiveTab }: NotificationsProps) {
-
+const bodyReplacement = `
   const [user] = useAuthState(auth);
   const [notifications, setNotifications] = useState<any[]>([]);
 
@@ -33,75 +33,11 @@ export default function Notifications({ setActiveTab }: NotificationsProps) {
     }
     setActiveTab(notif.tab);
   };
+`;
 
-  const old_notifications = [
-    {
-      id: 1,
-      type: 'like',
-      user: 'Elena G.',
-      avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop',
-      action: 'liked your intel log on',
-      target: 'The Roman Theatre',
-      time: '2h',
-      read: false,
-      tab: 'discover'
-    },
-    {
-      id: 2,
-      type: 'follow',
-      user: 'Marcus Rivera',
-      avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop',
-      action: 'joined your squad',
-      target: '',
-      time: '4h',
-      read: false,
-      tab: 'friends'
-    },
-    {
-      id: 3,
-      type: 'achievement',
-      user: 'System',
-      avatar: 'system',
-      action: 'unlocked badge:',
-      target: 'Night Owl Explorer',
-      time: '1d',
-      read: true,
-      tab: 'profile'
-    },
-    {
-      id: 4,
-      type: 'mention',
-      user: 'Sofia Lin',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop',
-      action: 'mentioned you in a log at',
-      target: 'Pyramids of Giza',
-      time: '2d',
-      read: true,
-      tab: 'discover'
-    }
-  ];
+content = content.replace("  const notifications = [", bodyReplacement + "\n  const old_notifications = [");
 
-  const getIcon = (type: string) => {
-    switch (type) {
-      case 'like': return <Heart className="w-4 h-4 text-[#E60023] fill-current" />;
-      case 'follow': return <UserPlus className="w-4 h-4 text-[#E60023]" />;
-      case 'achievement': return <Award className="w-4 h-4 text-[#E60023]" />;
-      case 'mention': return <MapPin className="w-4 h-4 text-emerald-500" />;
-      default: return null;
-    }
-  };
-
-  return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      <div className="flex items-center justify-between mb-8">
-        <h2 className="text-4xl font-display font-bold text-[#E2E8F0]">Alerts</h2>
-{notifications.filter(n => !n.read).length > 0 && (
-        <span className="bg-[#E60023]/10 text-[#E60023] px-3 py-1 rounded-full text-sm font-bold border border-[#E60023]/30">
-          {notifications.filter(n => !n.read).length} New
-        </span>)}
-      </div>
-
-      
+const mapReplacement = `
       <div className="bg-[#F0F0F0] dark:bg-[#1f1f1f] border border-[#E9E9E9] dark:border-[#333333] rounded-[2rem] overflow-hidden">
         {notifications.length === 0 ? (
           <div className="p-8 text-center text-zinc-500">No alerts yet.</div>
@@ -109,7 +45,7 @@ export default function Notifications({ setActiveTab }: NotificationsProps) {
           <div 
             key={notif.id} 
             onClick={() => handleNotifClick(notif)}
-            className={`p-6 flex items-start gap-4 transition-colors cursor-pointer border-b border-[#E9E9E9] dark:border-[#333333] last:border-0 ${notif.read ? 'hover:bg-[#E9E9E9] dark:hover:bg-[#333333]' : 'bg-[#E60023]/10 hover:bg-[#E60023]/20'}`}
+            className={\`p-6 flex items-start gap-4 transition-colors cursor-pointer border-b border-[#E9E9E9] dark:border-[#333333] last:border-0 \${notif.read ? 'hover:bg-[#E9E9E9] dark:hover:bg-[#333333]' : 'bg-[#E60023]/10 hover:bg-[#E60023]/20'}\`}
           >
             <div className="relative">
               {notif.actorPhoto === 'system' ? (
@@ -142,6 +78,15 @@ export default function Notifications({ setActiveTab }: NotificationsProps) {
           </div>
         ))}
       </div>
-    </div>
-  );
-}
+`;
+
+content = content.replace(/<div className="bg-\[#F0F0F0\] dark:bg-\[#1f1f1f\] border border-\[#E9E9E9\] dark:border-\[#333333\] rounded-\[2rem\] overflow-hidden">[\s\S]*?<\/div>\s*<\/div>/, mapReplacement + "\n    </div>");
+
+content = content.replace(`        <span className="bg-[#D4AF37]/10 text-[#E60023] px-3 py-1 rounded-full text-sm font-bold border border-[#D4AF37]/30">
+          2 New
+        </span>`, `{notifications.filter(n => !n.read).length > 0 && (
+        <span className="bg-[#E60023]/10 text-[#E60023] px-3 py-1 rounded-full text-sm font-bold border border-[#E60023]/30">
+          {notifications.filter(n => !n.read).length} New
+        </span>)}`);
+        
+fs.writeFileSync('src/components/Notifications.tsx', content);

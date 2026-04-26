@@ -302,7 +302,7 @@ export default function Profile() {
             <div className="w-10 h-10 rounded-xl bg-[#E9E9E9] dark:bg-[#333333] border border-[#E9E9E9] dark:border-[#333333] flex items-center justify-center">
               <Tag className="w-5 h-5 text-[#E60023]" />
             </div>
-            <h3 className="text-xl font-display font-bold text-[#111111] dark:text-[#F0F0F0]">Intel Tags</h3>
+            <h3 className="text-xl font-display font-bold text-[#111111] dark:text-[#F0F0F0]">Travel Tags</h3>
           </div>
           <div className="flex flex-wrap gap-2">
             {ALL_TAGS.map((tag) => {

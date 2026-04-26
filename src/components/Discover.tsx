@@ -185,7 +185,7 @@ export default function Discover({ setActiveTab }: DiscoverProps) {
             className={`flex items-center gap-2 px-6 py-2 rounded-full font-medium transition-all ${viewMode === 'map' ? 'bg-white dark:bg-[#111111] text-[#111111] dark:text-[#F0F0F0] shadow-sm' : 'text-zinc-400 hover:text-[#E2E8F0]'}`}
           >
             <MapIcon className="w-4 h-4" />
-            Intel Map
+            Explore Map
           </button>
         </div>
       </div>

@@ -46,9 +46,9 @@ export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
   const menuItems = [
     { id: 'discover', label: 'Discover', icon: Compass },
     { id: 'feed', label: 'Feed', icon: Globe },
-    { id: 'search', label: 'Intel', icon: Search },
+    { id: 'search', label: 'Search', icon: Search },
     { id: 'roadmap', label: 'Roadmap', icon: Map },
-    { id: 'friends', label: 'Squad', icon: Users },
+    { id: 'friends', label: 'Friends', icon: Users },
     { id: 'messages', label: 'Chat', icon: MessageCircle },
     { id: 'notifications', label: 'Alerts', icon: Bell },
     { id: 'profile', label: 'Profile', icon: UserIcon },

@@ -47,6 +47,7 @@ export default function PlaceDetailsModal({ place, isOpen, onClose }: PlaceDetai
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeReplyId, setActiveReplyId] = useState<string | null>(null);
   const [replyText, setReplyText] = useState('');
+  const [isLiked, setIsLiked] = useState(false);
   const [user] = useAuthState(auth);
 
   const fetchReviews = async () => {
@@ -69,13 +70,28 @@ export default function PlaceDetailsModal({ place, isOpen, onClose }: PlaceDetai
     }
   };
 
+  const checkLikedStatus = async () => {
+    if (!user || !place?.place_id) return;
+    try {
+      const interactionId = `${user.uid}_${place.place_id}_like`;
+      const docSnap = await getDoc(doc(db, "interactions", interactionId));
+      setIsLiked(docSnap.exists());
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   useEffect(() => {
     if (isOpen && place) {
       fetchReviews();
+      if (user) {
+        checkLikedStatus();
+      }
     } else {
       setReviews([]);
+      setIsLiked(false);
     }
-  }, [isOpen, place]);
+  }, [isOpen, place, user]);
 
   const handleAddReview = async () => {
     if (!user || !place || !newReviewText.trim()) return;
@@ -265,22 +281,30 @@ export default function PlaceDetailsModal({ place, isOpen, onClose }: PlaceDetai
                     })()}
                     <button
                       onClick={async () => {
-                        if (!user) return;
+                        if (!user) {
+                          alert("Authenticate to like places.");
+                          return;
+                        }
                         if (place) {
+                           const newStatus = !isLiked;
+                           setIsLiked(newStatus);
                            try {
                              await fetch('/api/interactions', {
                                method: 'POST',
                                headers: { 'Content-Type': 'application/json' },
-                               body: JSON.stringify({ user_id: user.uid, place_id: place.place_id || (place as any)._id, interaction_type: 'like' })
+                               body: JSON.stringify({ user_id: user.uid, place_id: place.place_id || (place as any)._id, interaction_type: newStatus ? 'like' : 'unlike' })
                              });
-                             alert("Added to liked places!");
-                           } catch(e) {}
+                           } catch(e) {
+                             setIsLiked(!newStatus);
+                             console.error("Failed to update liked status", e);
+                           }
                         }
                       }}
-                      className="bg-black/40 hover:bg-black/60 backdrop-blur-md border border-white/20 text-white px-4 py-2 rounded-xl font-bold text-sm shadow-lg transition-colors flex items-center justify-center gap-2"
+                      className={cn("backdrop-blur-md border border-white/20 px-4 py-2 rounded-xl font-bold text-sm shadow-lg transition-colors flex items-center justify-center gap-2", 
+                        isLiked ? "bg-[#E60023] text-white" : "bg-black/40 hover:bg-black/60 text-white")}
                     >
-                      <Heart className="w-4 h-4" />
-                      Like
+                      <Heart className={cn("w-4 h-4", isLiked ? "fill-current" : "")} />
+                      {isLiked ? 'Liked' : 'Like'}
                     </button>
                     <button
                       onClick={handleShare}
@@ -338,7 +362,7 @@ export default function PlaceDetailsModal({ place, isOpen, onClose }: PlaceDetai
               <div className="pt-4 border-t border-[#FFFFFF15]">
                 <h3 className="text-xl font-display font-bold text-[#E60023] mb-4 flex items-center gap-2">
                   <MessageSquare className="w-5 h-5" />
-                  Traveler Intel
+                  Reviews
                 </h3>
 
                 {user && (
@@ -356,7 +380,7 @@ export default function PlaceDetailsModal({ place, isOpen, onClose }: PlaceDetai
                           placeholder="Log your experience here..."
                           value={newReviewText}
                           onChange={(e) => setNewReviewText(e.target.value)}
-                          className="w-full bg-[#F0F0F0] text-[#E2E8F0] placeholder-zinc-500 rounded-xl p-3 focus:outline-none focus:ring-1 focus:ring-[#D4AF37] border border-[#FFFFFF15] resize-none"
+                          className="w-full bg-white dark:bg-[#222222] text-[#111111] dark:text-[#F0F0F0] placeholder-zinc-500 rounded-xl p-3 focus:outline-none focus:ring-1 focus:ring-[#E60023] border border-[#E9E9E9] dark:border-[#333333] resize-none"
                           rows={3}
                         />
                       </div>
@@ -376,9 +400,9 @@ export default function PlaceDetailsModal({ place, isOpen, onClose }: PlaceDetai
                       <button
                         onClick={handleAddReview}
                         disabled={isSubmitting || !newReviewText.trim()}
-                        className="bg-[#D4AF37] hover:bg-[#b8952b] text-[#0D1117] px-5 py-2 rounded-xl font-bold text-sm flex items-center gap-2 disabled:opacity-50 transition-colors"
+                        className="bg-[#E60023] hover:bg-[#cc0020] text-white px-5 py-2 rounded-xl font-bold text-sm flex items-center gap-2 disabled:opacity-50 transition-colors"
                       >
-                        {isSubmitting ? 'Logging...' : 'Post Intel'}
+                        {isSubmitting ? 'Logging...' : 'Post Review'}
                         <Send className="w-4 h-4" />
                       </button>
                     </div>

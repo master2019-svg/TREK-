@@ -62,7 +62,7 @@ export default function App() {
         
         <main className="flex-1 w-full md:ml-72 p-6 pb-28 md:p-12 md:pb-12 z-10 relative">
           
-          <AIIsland />
+          <AIIsland setActiveTab={setActiveTab} />
 
           {/* Desktop Global Header */}
           {user && (

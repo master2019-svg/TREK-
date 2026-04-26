@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { MessageCircle, Search as SearchIcon, Phone, Video, Info, Send } from 'lucide-react';
+import { MessageCircle, Search as SearchIcon, Phone, Video, Info, Send, X, UserPlus } from 'lucide-react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '../firebase';
 import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, limit } from 'firebase/firestore';
@@ -27,19 +27,55 @@ export default function Messages({ setActiveTab }: MessagesProps) {
     { id: 'global', name: 'Global Board', desc: 'Join the conversation', avatar: 'GB', unread: true },
   ]);
 
+
+  const [showNewChat, setShowNewChat] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const res = await fetch(`/api/users/search?query=${searchQuery}`);
+        const data = await res.json();
+        setSearchResults(data.data || []);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   const handleNewChat = () => {
-    const friendName = prompt("Enter the name of the traveler you want to chat with:");
-    if (!friendName) return;
-    const newId = 'chat_' + Date.now();
-    setChats([{
-      id: newId,
-      name: friendName,
-      desc: 'Start chatting...',
-      avatar: friendName[0].toUpperCase(),
-      unread: false,
-    }, ...chats]);
-    setActiveChat(newId);
+    setShowNewChat(true);
   };
+
+  const startChatWithUser = (selectedUser: any) => {
+    const friendName = selectedUser.displayName || selectedUser.nickname || 'Traveler';
+    const newId = 'chat_' + selectedUser.uid;
+    const existingChat = chats.find(c => c.id === newId);
+    
+    if (!existingChat) {
+      setChats([{
+        id: newId,
+        name: friendName,
+        desc: 'Start chatting...',
+        avatar: friendName[0].toUpperCase(),
+        unread: false,
+      }, ...chats]);
+    }
+    setActiveChat(newId);
+    setShowNewChat(false);
+    setSearchQuery('');
+  };
+
 
   useEffect(() => {
     if (!user) return;
