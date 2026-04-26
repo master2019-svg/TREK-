@@ -4,6 +4,9 @@ import path from 'path';
 import fs from 'fs';
 import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, getDocs, doc, getDoc, setDoc, updateDoc, query, where, deleteDoc, arrayUnion, documentId } from 'firebase/firestore';
+import { GoogleGenAI } from '@google/genai';
+
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 const app = express();
 const PORT = parseInt(process.env.PORT || '3000', 10);
@@ -199,21 +202,68 @@ async function startServer() {
       if (!searchQuery) return res.json({ data: [] });
 
       const queryStr = (searchQuery as string).toLowerCase();
-      const usersSnap = await getDocs(collection(db, "users"));
       
-      const users = usersSnap.docs
-        .map(doc => doc.data())
-        .filter(u => 
-          (u.nickname && u.nickname.toLowerCase().includes(queryStr)) ||
-          (u.displayName && u.displayName.toLowerCase().includes(queryStr)) ||
-          (u.email && u.email.toLowerCase().includes(queryStr))
-        )
-        .slice(0, 10);
+      // Fetch all users and their preferences for semantic search
+      const usersSnap = await getDocs(collection(db, "users"));
+      const prefsSnap = await getDocs(collection(db, "user_travel_preferences"));
+      
+      const prefsMap = new Map();
+      prefsSnap.docs.forEach(doc => prefsMap.set(doc.id, doc.data()));
 
-      res.json({ data: users.map(u => ({ 
+      const users = usersSnap.docs.map(doc => {
+        const u = doc.data();
+        const p = prefsMap.get(u.uid) || {};
+        return {
+          uid: u.uid,
+          displayName: u.displayName || '',
+          nickname: u.nickname || '',
+          email: u.email || '',
+          photoURL: u.photoURL,
+          bio: p.tags?.join(' ') + ' ' + p.categories?.join(' ') + ' ' + (p.destinations?.join(' ') || '')
+        };
+      });
+
+      // Simple matching first
+      let matchedUsers = users.filter(u => 
+        u.nickname.toLowerCase().includes(queryStr) ||
+        u.displayName.toLowerCase().includes(queryStr) ||
+        u.email.toLowerCase().includes(queryStr)
+      );
+
+      // If no direct matches, or if it looks like a natural language query ("find people who like diving")
+      if (queryStr.includes(' ') || matchedUsers.length === 0) {
+        try {
+          const prompt = `
+          You are a semantic search engine matching user queries to user profiles.
+          Query: "${queryStr}"
+          
+          Users:
+          ${users.map(u => `ID: ${u.uid} | Name: ${u.displayName || u.nickname} | Keywords: ${u.bio}`).join('\n')}
+          
+          Return a comma-separated list of the top 5 user IDs that best match the query. If none match well, return an empty string. Only return the IDs, nothing else. Never return backticks or markdown, just raw text.
+          `;
+          
+          const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+          });
+          
+          const idsString = response.text || '';
+          const rankedIds = idsString.split(',').map((id: string) => id.trim()).filter((id: string) => id);
+          
+          if (rankedIds.length > 0) {
+            matchedUsers = rankedIds.map((id: string) => users.find(u => u.uid === id)).filter((u: any) => u);
+          }
+        } catch (aiError) {
+          console.error("Gemini semantic search failed, falling back to basic search", aiError);
+        }
+      }
+
+      res.json({ data: matchedUsers.slice(0, 10).map((u: any) => ({ 
         uid: u.uid, displayName: u.displayName, nickname: u.nickname, photoURL: u.photoURL 
       }))});
     } catch (error) {
+      console.error("User search error:", error);
       res.status(500).json({ error: "Failed to search users" });
     }
   });

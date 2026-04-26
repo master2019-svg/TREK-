@@ -14,6 +14,8 @@
   --color-cinematic-text: #E2E8F0;
 }
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @layer base {
   :root {
     --bg-color: #FFFFFF;

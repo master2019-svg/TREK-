@@ -196,8 +196,8 @@ export default function Profile() {
             )}
           </div>
           <div>
-            <h2 className="text-4xl font-display font-bold text-[#111111] dark:text-[#F0F0F0] tracking-tight mb-1">Dossier Profile</h2>
-            <p className="text-[#767676] dark:text-[#A0A0A0] font-mono text-sm uppercase tracking-widest">Clearance Level: VIP</p>
+            <h2 className="text-4xl font-display font-bold text-[#111111] dark:text-[#F0F0F0] tracking-tight mb-1">Your Profile</h2>
+            <p className="text-[#767676] dark:text-[#A0A0A0] font-medium text-sm">Manage preferences and saved places</p>
           </div>
         </div>
         <motion.button
@@ -205,10 +205,10 @@ export default function Profile() {
           whileTap={{ scale: 0.95 }}
           onClick={handleSave}
           disabled={saving}
-          className="px-8 py-3 bg-[#E60023] text-[#0D1117] rounded-xl font-bold flex items-center gap-3 hover:bg-[#b8952b] transition-all shadow-[0_0_15px_rgba(212,175,55,0.4)] disabled:opacity-50"
+          className="px-8 py-3 bg-[#E60023] text-white rounded-xl font-bold flex items-center gap-3 hover:bg-[#cc0020] transition-all shadow-md disabled:opacity-50"
         >
           {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : saved ? <CheckCircle2 className="w-5 h-5" /> : <Save className="w-5 h-5" />}
-          {saved ? 'Secured' : 'Lock Profile'}
+          {saved ? 'Saved' : 'Save'}
         </motion.button>
       </div>
 
@@ -222,19 +222,19 @@ export default function Profile() {
         className="grid grid-cols-1 md:grid-cols-3 gap-6"
       >
         {/* Nickname */}
-        <motion.div variants={itemVariants} className="bg-white dark:bg-[#111111] border border-[#E9E9E9] dark:border-[#333333] p-8 rounded-[2rem] space-y-6 md:col-span-3 border-t-2 border-t-[#E60023]">
+        <motion.div variants={itemVariants} className="bg-white dark:bg-[#111111] border border-[#E9E9E9] dark:border-[#333333] p-8 rounded-[2rem] space-y-6 md:col-span-3">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 rounded-xl bg-[#E9E9E9] dark:bg-[#333333] border border-[#E9E9E9] dark:border-[#333333] flex items-center justify-center">
               <UserIcon className="w-5 h-5 text-[#E60023]" />
             </div>
             <div>
-              <h3 className="text-xl font-display font-bold text-[#111111] dark:text-[#F0F0F0]">Callsign</h3>
-              <p className="text-sm text-[#767676] dark:text-[#A0A0A0]">Your network alias.</p>
+              <h3 className="text-xl font-display font-bold text-[#111111] dark:text-[#F0F0F0]">Display Name</h3>
+              <p className="text-sm text-[#767676] dark:text-[#A0A0A0]">How others see you on Trek.</p>
             </div>
           </div>
           <input
             type="text"
-            placeholder="Choose callsign..."
+            placeholder="Choose display name..."
             value={nickname}
             onChange={(e) => setNickname(e.target.value)}
             className="w-full p-4 bg-[#E9E9E9] dark:bg-[#333333] border border-[#E9E9E9] dark:border-[#333333] rounded-xl focus:outline-none focus:border-[#D4AF37]/50 transition-all text-[#111111] dark:text-[#F0F0F0] text-lg tracking-wide"

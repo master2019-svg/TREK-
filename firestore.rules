@@ -102,14 +102,23 @@ service cloud.firestore {
       allow delete: if true;
     }
 
+    match /messages/{messageId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
     match /places/{placeId} {
       allow read: if true; // Publicly readable
       allow write: if true; // Allow seeding for now
     }
 
     match /reviews/{reviewId} {
-      allow read: if true; // Publicly readable
-      allow write: if isAuthenticated(); // Allow authenticated users to write reviews
+      allow read: if true; 
+      allow write: if isAuthenticated(); 
+    }
+
+    match /posts/{postId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
     }
   }
 }

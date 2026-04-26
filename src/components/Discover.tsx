@@ -19,6 +19,7 @@ export default function Discover({ setActiveTab }: DiscoverProps) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
   const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
   const [userInteractions, setUserInteractions] = useState<{liked: Set<string>, saved: Set<string>}>({
@@ -57,9 +58,15 @@ export default function Discover({ setActiveTab }: DiscoverProps) {
       if (recommendationsResult.data) {
         const newPlaces = recommendationsResult.data.map((item: any) => item.place);
         if (isLoadMore) {
-          setPlaces(prev => [...prev, ...newPlaces]);
+          setPlaces(prev => {
+            const currentIds = new Set(prev.map(p => p.place_id || p._id));
+            const uniqueNew = newPlaces.filter((p: any) => !currentIds.has(p.place_id || p._id));
+            if (uniqueNew.length < 5) setHasMore(false);
+            return [...prev, ...uniqueNew];
+          });
         } else {
           setPlaces(newPlaces);
+          setHasMore(true);
         }
       }
     } catch (error) {
@@ -80,7 +87,7 @@ export default function Discover({ setActiveTab }: DiscoverProps) {
   useEffect(() => {
     const observer = new IntersectionObserver(
       entries => {
-        if (entries[0].isIntersecting && !loading && !loadingMore && !refreshing && places.length > 0) {
+        if (entries[0].isIntersecting && !loading && !loadingMore && !refreshing && places.length > 0 && hasMore) {
           fetchData(true);
         }
       },

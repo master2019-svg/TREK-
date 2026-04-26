@@ -264,8 +264,27 @@ export default function PlaceDetailsModal({ place, isOpen, onClose }: PlaceDetai
                       return null;
                     })()}
                     <button
+                      onClick={async () => {
+                        if (!user) return;
+                        if (place) {
+                           try {
+                             await fetch('/api/interactions', {
+                               method: 'POST',
+                               headers: { 'Content-Type': 'application/json' },
+                               body: JSON.stringify({ user_id: user.uid, place_id: place.place_id || (place as any)._id, interaction_type: 'like' })
+                             });
+                             alert("Added to liked places!");
+                           } catch(e) {}
+                        }
+                      }}
+                      className="bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/20 text-white px-4 py-2 rounded-xl font-bold text-sm shadow-lg transition-colors flex items-center justify-center gap-2"
+                    >
+                      <Heart className="w-4 h-4" />
+                      Like
+                    </button>
+                    <button
                       onClick={handleShare}
-                      className="bg-white dark:bg-[#111111]/20 hover:bg-white dark:bg-[#111111]/30 backdrop-blur-md border border-white/20 text-white px-4 py-2 rounded-xl font-bold text-sm shadow-lg transition-colors flex items-center justify-center gap-2"
+                      className="bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/20 text-white px-4 py-2 rounded-xl font-bold text-sm shadow-lg transition-colors flex items-center justify-center gap-2"
                     >
                       {copied ? (
                         <>

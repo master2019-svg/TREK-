@@ -12,6 +12,7 @@ import Profile from './components/Profile';
 import Friends from './components/Friends';
 import Messages from './components/Messages';
 import Notifications from './components/Notifications';
+import Feed from './components/Feed';
 import AIIsland from './components/AIIsland';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { motion, AnimatePresence } from 'motion/react';
@@ -27,6 +28,8 @@ export default function App() {
     switch (activeTab) {
       case 'discover':
         return <Discover setActiveTab={setActiveTab} />;
+      case 'feed':
+        return <Feed />;
       case 'search':
         return <Search />;
       case 'roadmap':

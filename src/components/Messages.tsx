@@ -28,12 +28,14 @@ export default function Messages({ setActiveTab }: MessagesProps) {
   ]);
 
   const handleNewChat = () => {
+    const friendName = prompt("Enter the name of the traveler you want to chat with:");
+    if (!friendName) return;
     const newId = 'chat_' + Date.now();
     setChats([{
       id: newId,
-      name: 'New Conversation',
+      name: friendName,
       desc: 'Start chatting...',
-      avatar: 'NC',
+      avatar: friendName[0].toUpperCase(),
       unread: false,
     }, ...chats]);
     setActiveChat(newId);
@@ -182,7 +184,7 @@ export default function Messages({ setActiveTab }: MessagesProps) {
                   value={messageText}
                   onChange={e => setMessageText(e.target.value)}
                   placeholder="Type your message..."
-                  className="flex-1 bg-slate-50 dark:bg-[#1f1f1f] border border-slate-200 dark:border-[#333333] text-slate-900 dark:text-[#F0F0F0] rounded-full py-3 px-5 focus:outline-none focus:border-[#006CE4]"
+                  className="flex-1 bg-slate-50 dark:bg-[#333333] border border-slate-200 dark:border-[#444444] text-slate-900 dark:text-white rounded-full py-3 px-5 focus:outline-none focus:border-[#E60023]"
                 />
                 <button 
                   type="submit"

@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { auth, googleProvider, signInWithPopup, signOut, db } from '../firebase';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { Compass, Search, Map, User as UserIcon, LogIn, LogOut, Plane, Loader2, Users, Bell, MessageCircle, Globe, Moon, Sun } from 'lucide-react';
+import { Compass, Search, Map, User as UserIcon, LogIn, LogOut, Plane, Loader2, Users, Bell, MessageCircle, Moon, Sun, Globe } from 'lucide-react';
+import TrekLogo from './TrekLogo';
 import { motion } from 'motion/react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -44,6 +45,7 @@ export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
 
   const menuItems = [
     { id: 'discover', label: 'Discover', icon: Compass },
+    { id: 'feed', label: 'Feed', icon: Globe },
     { id: 'search', label: 'Intel', icon: Search },
     { id: 'roadmap', label: 'Roadmap', icon: Map },
     { id: 'friends', label: 'Squad', icon: Users },
@@ -110,7 +112,7 @@ export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
       <div className="md:hidden sticky top-0 left-0 right-0 z-50 bg-white dark:bg-[#111111] border-b border-[#E9E9E9] dark:border-[#333333] p-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-[#E60023] rounded-full flex items-center justify-center shadow-lg">
-            <Globe className="text-white w-6 h-6" />
+            <TrekLogo className="text-white w-6 h-6" />
           </div>
           <h1 className="text-2xl font-display font-black tracking-tight text-[#E60023]">TREK</h1>
         </div>
@@ -143,7 +145,7 @@ export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
         <div className="flex items-center justify-between mb-12 px-2">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-[#E60023] rounded-full flex items-center justify-center shadow-sm">
-              <Globe className="text-white w-6 h-6" />
+              <TrekLogo className="text-white w-6 h-6" />
             </div>
             <h1 className="text-2xl font-display font-black tracking-widest text-[#E60023] uppercase">TREK</h1>
           </div>
